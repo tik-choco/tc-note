@@ -1,0 +1,43 @@
+{
+  "name": "tc-note",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/fetch-mistlib.mjs",
+    "dev": "vite --host",
+    "prebuild": "node scripts/fetch-mistlib.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "fetch-mistlib": "node scripts/fetch-mistlib.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.6",
+    "@lezer/markdown": "^1.6.4",
+    "@tik-choco/mistai": "github:tik-choco-lab/mistai",
+    "dompurify": "^3.2.4",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.17.0",
+    "lib0": "^0.2.117",
+    "marked": "^15.0.7",
+    "marked-highlight": "^2.2.4",
+    "marked-katex-extension": "^5.1.10",
+    "mermaid": "^11.16.0",
+    "preact": "^10.29.3",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.31"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
+    "@types/node": "^24.13.2",
+    "dotenv": "^16.4.7",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1",
+    "vitest": "^4.1.9"
+  }
+}

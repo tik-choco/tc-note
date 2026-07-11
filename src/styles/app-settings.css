@@ -1,0 +1,122 @@
+/* Display / preferences body. Rendered inside SettingsModal (no chrome of its
+   own); the overlay + modal rules are kept for any standalone use and share
+   the modern surface/elevation language of the unified modal. */
+.app-settings-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: var(--z-modal);
+  animation: tc-fade-in var(--dur-med) var(--ease-out);
+}
+
+.app-settings-modal {
+  width: min(360px, 90vw);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  padding: var(--space-5);
+  animation: tc-modal-in var(--dur-med) var(--ease-out);
+}
+
+.app-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.app-settings-header h2 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+  margin: 0;
+}
+
+/* Each preference group is its own section card — tc-town's card language
+   (surface + border + radius-lg + shadow-1) — so the Display tab reads as a
+   short stack of cards rather than one long unbroken list. Spacing between
+   cards comes from the parent .settings-panel's gap, not a local margin. */
+.app-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.app-settings-label {
+  font-size: 13px;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.app-settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Dropdown for choices with many options (e.g. the UI language) — scales past
+   what a horizontal segmented control can hold. Recessed surface-2 field with
+   an accent focus ring, matching tc-town's field styling. */
+.app-settings-select {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.app-settings-select:hover:not(:focus-visible) {
+  background: var(--surface-hover);
+}
+
+.app-settings-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.app-settings-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* Keyboard-shortcut key caps — a small chip so the combos read as physical
+   keys rather than inline text. */
+.app-settings-option kbd {
+  flex-shrink: 0;
+  min-width: 2.6em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  background: var(--surface-2);
+  color: var(--text-h);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+}

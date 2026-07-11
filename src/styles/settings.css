@@ -1,0 +1,111 @@
+/* Unified, tabbed Settings modal (SettingsModal.tsx). The shell owns the
+   overlay, header, and tab switcher; the per-tab bodies reuse the existing
+   app-settings-* and llm-settings-* section styles. Theme-aware via the
+   shared tokens; the tc-fade-in / tc-modal-in animations are neutralized by
+   the global prefers-reduced-motion reset in index.css. */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: var(--z-modal);
+  animation: tc-fade-in var(--dur-med) var(--ease-out);
+}
+
+.settings-modal {
+  width: min(560px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  animation: tc-modal-in var(--dur-med) var(--ease-out);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-3);
+}
+
+.settings-header h2 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+  margin: 0;
+}
+
+/* Pill segmented tab bar — tc-town's settings pattern: a filled pill track
+   with the active tab lifted onto its own surface + shadow, so switching
+   tabs reads as sliding a selection rather than crossing a divider line.
+   Sits directly under the header; no border-bottom needed. */
+.settings-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 var(--space-5);
+  padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.settings-tab {
+  appearance: none;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text-subtle);
+  background: transparent;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.settings-tab:hover:not(.settings-tab--active) {
+  color: var(--text-h);
+  background: var(--surface-hover);
+}
+
+.settings-tab--active {
+  color: var(--accent);
+  font-weight: 650;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.settings-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* The active section. Scrolls on its own so the header + tabs stay pinned
+   while the denser AI tab overflows. Sections stack as cards on a shared
+   gap rather than each owning its own trailing margin. */
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  overflow-y: auto;
+}

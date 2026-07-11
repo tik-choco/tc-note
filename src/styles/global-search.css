@@ -1,0 +1,248 @@
+/* Global full-text search (Ctrl+Shift+F) — a modern command-palette overlay.
+   Uses only the shared design tokens (see index.css), so light/dark and the
+   teal accent flow through automatically. Motion reuses the shared keyframes,
+   which the global prefers-reduced-motion rule already neutralizes. */
+
+.global-search-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  /* Sit the palette near the top, command-palette style. */
+  padding: 10vh var(--space-5) var(--space-5);
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: var(--z-modal);
+  animation: tc-fade-in var(--dur-med) var(--ease-out);
+}
+
+.global-search {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 92vw);
+  max-height: min(70vh, 560px);
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  animation: tc-modal-in var(--dur-med) var(--ease-out);
+}
+
+/* --- Search input ------------------------------------------------------- */
+
+.global-search-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.global-search-input-icon {
+  flex-shrink: 0;
+  color: var(--text-subtle);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.global-search-input-row:focus-within .global-search-input-icon {
+  color: var(--accent);
+}
+
+.global-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.4;
+  padding: var(--space-1) 0;
+  /* The input is auto-focused and is the modal's only tab stop; the caret and
+     the icon turning accent (above) signal focus, so drop the default ring
+     that would otherwise wrap the full-width borderless field. */
+  outline: none;
+}
+
+.global-search-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* --- Results ------------------------------------------------------------ */
+
+.global-search-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.global-search-meta {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+.global-search-status,
+.global-search-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-subtle);
+  font-size: 14px;
+}
+
+.global-search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.global-search-result {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.global-search-result.is-selected {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.global-search-result-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.global-search-result-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--text-h);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result.is-selected .global-search-result-title {
+  color: var(--accent);
+}
+
+.global-search-result-folder {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
+  max-width: 40%;
+  font-size: 12px;
+  color: var(--text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result-snippet {
+  margin-top: var(--space-1);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-subtle);
+  /* Two-line clamp keeps rows compact while giving enough context. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Highlighted matches in both titles and snippets. */
+.global-search-result mark {
+  background: var(--accent-bg-strong);
+  color: var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
+  font-weight: 600;
+}
+
+.global-search-result-snippet mark {
+  font-weight: 550;
+}
+
+/* --- Footer ------------------------------------------------------------- */
+
+.global-search-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.global-search-footer-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.global-search-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Visually hidden but available to screen readers (the input's aria hint). */
+.global-search-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .global-search-overlay {
+    padding: var(--space-6) var(--space-4) var(--space-4);
+  }
+
+  .global-search {
+    max-height: 80vh;
+  }
+
+  /* The footer's keyboard hints are moot on touch devices. */
+  .global-search-footer {
+    display: none;
+  }
+}

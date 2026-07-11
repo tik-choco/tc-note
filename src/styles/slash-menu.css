@@ -1,0 +1,42 @@
+/* "/" slash-command popup. Popover tier: --radius-md container (matching
+   .selection-toolbar), --radius-sm items — one step down from the modal tier
+   (--radius-lg) used by GlobalSearchModal/ImportModal. */
+
+.slash-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: tc-popover-in var(--dur-fast) var(--ease-out);
+}
+
+.slash-menu-item {
+  text-align: left;
+  border: none;
+  background: none;
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+/* The single highlighted item (keyboard nav and mouse-hover both land here —
+   see SlashMenu.tsx's onMouseEnter/onHighlightChange) gets the same accent
+   tint as GlobalSearchModal's .is-selected row, rather than a neutral hover,
+   so the active pick reads clearly against the rest of the list. */
+.slash-menu-item--active {
+  background: var(--accent-bg);
+  color: var(--accent);
+}

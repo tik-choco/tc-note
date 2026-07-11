@@ -1,0 +1,250 @@
+/* ---------- outline panel ----------
+   <1024px: a 32px trigger button that reveals a small popover on hover/tap.
+   >=1024px: a quiet always-on rail of dashes (one per heading) that expands
+   into the same heading list on hover/focus-within. See the media query at
+   the bottom for the wide-viewport overrides. */
+
+.outline-hover-zone {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.outline-trigger {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  opacity: 0.55;
+  font-size: 15px;
+  box-shadow: var(--shadow-1);
+  transition: opacity var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.outline-hover-zone:hover .outline-trigger,
+.outline-trigger:focus-visible,
+.outline-trigger[aria-expanded="true"] {
+  opacity: 1;
+  background: var(--surface-hover);
+  color: var(--text-h);
+}
+
+/* ---------- wide-viewport rail (hidden below 1024px) ---------- */
+
+.outline-rail {
+  display: none;
+}
+
+.outline-rail__dash {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 16px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.outline-rail__dash::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+  opacity: 0.55;
+  transition: background-color var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+.outline-rail__dash--level1::after {
+  width: 20px;
+}
+
+.outline-rail__dash--level2::after {
+  width: 14px;
+}
+
+.outline-rail__dash--level3::after {
+  width: 9px;
+}
+
+.outline-rail__dash:hover::after,
+.outline-rail__dash:focus-visible::after,
+.outline-rail__dash--active::after {
+  opacity: 1;
+  background: var(--accent);
+}
+
+.outline-panel {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 220px;
+  max-height: 60vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  padding: var(--space-3);
+  overflow-y: auto;
+  transform: translateY(-4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+/* --open covers keyboard and touch (Enter/tap toggles it in the component).
+   No :focus-within opener at this breakpoint — the trigger keeps focus
+   after toggling closed, so focus-within would pin the panel visible
+   against the component state. */
+.outline-hover-zone:hover .outline-panel,
+.outline-panel--open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.outline-panel h4 {
+  margin: 0 0 var(--space-2);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-subtle);
+}
+
+.outline-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* A quiet tree: top-level headings read a touch stronger, deeper levels fade
+   toward --text-subtle so the hierarchy is legible without extra chrome. */
+.outline-item {
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.outline-item[data-level="1"] button {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.outline-item[data-level="3"] button {
+  color: var(--text-subtle);
+}
+
+.outline-panel button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.outline-panel button:hover {
+  color: var(--accent);
+  background: var(--surface-hover);
+}
+
+/* Heading currently in view (scroll-spy) — an accent tint plus a hairline
+   indicator bar at the row's left edge, the family's active-row recipe. */
+.outline-panel button.outline-panel__item--active {
+  color: var(--accent);
+  font-weight: 600;
+  background: var(--accent-bg);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.outline-empty {
+  font-size: 13px;
+  color: var(--text);
+}
+
+@media (pointer: coarse) {
+  /* Expand the 32px trigger to a ~40px tap target without growing it. */
+  .outline-trigger {
+    position: relative;
+  }
+
+  .outline-trigger::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+  }
+}
+
+/* ---------- wide viewports: swap the trigger for the always-on rail ---------- */
+
+@media (min-width: 1024px) {
+  .outline-hover-zone {
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+  }
+
+  .outline-trigger {
+    display: none;
+  }
+
+  .outline-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  /* The shared heading list now sits to the left of the rail instead of
+     dropping below a trigger button, still vertically centered with it. */
+  .outline-panel {
+    top: 50%;
+    right: 100%;
+    margin-right: var(--space-3);
+    transform: translateY(-50%) translateX(6px);
+  }
+
+  .outline-hover-zone:hover .outline-panel,
+  .outline-hover-zone:focus-within .outline-panel,
+  .outline-panel--open {
+    transform: translateY(-50%) translateX(0);
+  }
+
+  /* The dashes fade back once the full list has taken over on mouse hover,
+     so the two presentations don't visually double up while expanded. Not
+     applied on :focus-within — a focused dash needs to stay visible so its
+     focus ring doesn't disappear while the panel opens alongside it. */
+  .outline-hover-zone:hover .outline-rail {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .outline-rail {
+    display: none;
+  }
+}

@@ -1,0 +1,90 @@
+/* ---------- bibtex block (rendered ```bibtex fenced blocks) ---------- */
+
+.bibtex-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  cursor: text;
+}
+
+.bibtex-block--empty {
+  color: var(--text-subtle);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.bibtex-entry {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.bibtex-entry-title {
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.bibtex-entry-meta {
+  margin-top: var(--space-1);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.bibtex-entry-key {
+  display: inline-block;
+  margin-top: var(--space-2);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--code-bg);
+  color: var(--text-subtle);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* ---------- inline @citekey references (rendered prose) ---------- */
+
+/* Deliberately doesn't look like a normal hyperlink (dotted underline
+   instead of solid, cursor stays the block's text cursor) since it doesn't
+   navigate anywhere -- hovering/focusing just surfaces the citation card. */
+.bibtex-ref {
+  color: var(--accent);
+  text-decoration: underline dotted;
+  text-decoration-color: var(--accent-border);
+  text-underline-offset: 2px;
+  cursor: text;
+}
+
+.bibtex-ref:hover,
+.bibtex-ref:focus-visible {
+  text-decoration-color: var(--accent);
+}
+
+.bibtex-hover-card {
+  position: fixed;
+  z-index: 15;
+  max-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-3) var(--space-4);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text);
+  animation: tc-popover-in var(--dur-fast) var(--ease-out);
+  /* Purely informational -- never intercept the mouse, so leaving the
+     citekey span (even briefly passing over the card underneath it) still
+     dismisses it via the span's own mouseout instead of flickering. */
+  pointer-events: none;
+}
+
+.bibtex-hover-card-title {
+  font-weight: 700;
+  color: var(--text-h);
+  margin-bottom: 2px;
+}
+
+.bibtex-hover-card-meta {
+  color: var(--text-subtle);
+}

@@ -1,0 +1,499 @@
+/* ---------- folders & note list (sidebar) ---------- */
+
+/* Friendlier empty state: a muted icon stacked above the helper copy,
+   matching the tik-choco family's cv-empty-state pattern, instead of a bare
+   line of text. */
+.sidebar-empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-subtle);
+  padding: var(--space-6) var(--space-3);
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.sidebar-empty-hint-icon {
+  display: inline-flex;
+  color: var(--text-subtle);
+  opacity: 0.8;
+}
+
+.sidebar-empty-hint p {
+  margin: 0;
+}
+
+.note-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 0;
+}
+
+.note-section--grow {
+  flex: 1;
+}
+
+.note-section h3 {
+  margin: var(--space-0) 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-subtle);
+  font-weight: 650;
+}
+
+.note-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.note-section-header h3 {
+  margin: var(--space-0) 0;
+}
+
+.folder-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.folder-add-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-h);
+}
+
+.folder-add-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.folder-create-form input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 4px;
+}
+
+.folder-create-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.folder-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-h);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.folder-header:hover {
+  background: var(--surface-hover);
+}
+
+.folder-header.drop-target,
+.note-section--grow.drop-target {
+  background: var(--accent-bg);
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
+.folder-header:hover .folder-delete {
+  opacity: 1;
+}
+
+/* The expand/collapse <button> inside the header row — styled as the row
+   text it replaced (share/delete stay siblings, outside it). */
+.folder-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folder-arrow {
+  display: inline-flex;
+  width: 14px;
+  color: var(--text);
+  flex-shrink: 0;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.folder-icon {
+  display: inline-flex;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.folder-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.folder-count {
+  font-size: 11px;
+  color: var(--text-subtle);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.folder-delete {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.folder-delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* "Add a note to this folder" — hover-revealed like delete to keep the folder
+   row calm, but turns accent on hover to read as the create action. */
+.folder-note-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.folder-header:hover .folder-note-add {
+  opacity: 1;
+}
+
+.folder-note-add:hover {
+  color: var(--accent);
+}
+
+.folder-group .note-list {
+  padding-left: var(--space-5);
+}
+
+.note-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.note-list-empty {
+  font-size: 13px;
+  color: var(--text-subtle);
+  padding: 4px 2px 10px;
+}
+
+.note-list li {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  gap: var(--space-1);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.note-list li:hover {
+  background: var(--surface-hover);
+}
+
+.note-list li.active {
+  background: var(--accent-bg);
+}
+
+.note-list li.active:hover {
+  background: var(--accent-bg);
+}
+
+.note-list li.active .note-title {
+  color: var(--accent);
+}
+
+.favorite-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  padding: 6px 0 6px 8px;
+  font-size: 14px;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.favorite-toggle:hover {
+  color: var(--text-h);
+}
+
+/* A favorited note's star stays accent-tinted so it reads at a glance,
+   even when the row isn't hovered/active. */
+.favorite-toggle.is-favorite {
+  color: var(--accent);
+}
+
+/* A real <button> (keyboard-openable) that must look like the plain row
+   text it replaced — reset the UA button chrome. */
+.note-summary {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--space-3) var(--space-1);
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.note-title {
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.note-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.note-preview {
+  font-size: 12px;
+  color: var(--text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "More actions" (kebab) trigger, hover-revealed like the delete button it
+   replaced, plus the custom popover it opens. Quiet by design: no fill, no
+   border, just an icon that fades in on row hover/focus. */
+.note-more {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.note-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-right: 4px;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: opacity 0.12s ease, background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.note-list li:hover .note-more-btn,
+.note-more-btn[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.note-more-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-h);
+}
+
+/* Keyboard focus must stay visible even when the row isn't hovered. */
+.note-more-btn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* position:fixed (computed from the trigger's/row's getBoundingClientRect in
+   NoteList.tsx) so the sidebar's overflow-y:auto scroll container can't clip
+   it — the same approach as FolderShareButton's popover. */
+.note-more-menu {
+  position: fixed;
+  z-index: 20;
+  min-width: 180px;
+  max-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--text);
+  animation: tc-popover-in var(--dur-med) var(--ease-out);
+}
+
+.note-more-label {
+  margin: var(--space-1) var(--space-2) 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-subtle);
+  font-weight: 650;
+}
+
+.note-more-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: var(--space-2) var(--space-2);
+  border: none;
+  background: none;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-h);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.note-more-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-more-item:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.note-more-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The note's current folder — shown with a check icon, marked accent, and
+   inert (nothing to do, it's already there). */
+.note-more-item:disabled {
+  color: var(--accent);
+  font-weight: 600;
+  cursor: default;
+}
+
+.note-more-divider {
+  height: 1px;
+  margin: var(--space-1) 2px;
+  background: var(--border);
+}
+
+.note-more-item--danger {
+  color: var(--danger);
+}
+
+.note-more-item--danger:hover {
+  background: var(--danger-bg);
+}
+
+/* No hover on touch devices — hover-revealed controls stay visible. */
+@media (hover: none) {
+  .folder-delete,
+  .folder-note-add,
+  .note-more-btn {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  /* Comfortable row + control tap targets on touch. */
+  .note-list li {
+    min-height: 44px;
+  }
+
+  .favorite-toggle {
+    padding: var(--space-3) var(--space-1) var(--space-3) var(--space-3);
+  }
+
+  /* Expand tap targets to ~40px without growing the visuals. */
+  .folder-delete,
+  .folder-add-btn,
+  .note-more-btn {
+    position: relative;
+  }
+
+  .folder-delete::after,
+  .folder-add-btn::after,
+  .note-more-btn::after {
+    content: "";
+    position: absolute;
+    inset: -10px -8px;
+  }
+
+  .note-more-item {
+    padding: var(--space-3) var(--space-2);
+  }
+}
