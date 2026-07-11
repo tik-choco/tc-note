@@ -1,0 +1,72 @@
+@keyframes tc-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Fixed container so multiple toasts stack instead of overlapping; sits
+   above modal overlays (--z-toast > --z-modal) so feedback stays visible. */
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: var(--z-toast);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  font-size: 13px;
+  animation: tc-toast-in var(--dur-med) var(--ease-out);
+}
+
+.toast-undo {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.toast-undo:hover {
+  background: var(--accent-bg);
+  color: var(--accent-hover);
+}
+
+.toast-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.toast-close:hover {
+  color: var(--text-h);
+  background: var(--surface-hover);
+}

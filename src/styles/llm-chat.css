@@ -1,0 +1,261 @@
+/* Assistant chat panel: a fixed drawer on the right edge, above the editor.
+   Toggled from the editor toolbar (see EditorToolbar's chat button). */
+
+.llm-chat-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 92vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-3);
+  z-index: var(--z-modal);
+  animation: tc-chat-slide-in var(--dur-med) var(--ease-out);
+}
+
+@keyframes tc-chat-slide-in {
+  from {
+    transform: translateX(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.llm-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.llm-chat-title {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+}
+
+.llm-chat-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.llm-chat-badge {
+  font-size: 11px;
+  color: var(--text-subtle);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.llm-chat-badge--serving {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.llm-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.llm-chat-empty {
+  color: var(--text-subtle);
+  font-size: 13px;
+  text-align: center;
+  margin: auto 0;
+}
+
+.llm-chat-msg {
+  max-width: 85%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* User bubbles read as a quiet accent tint rather than a solid fill — keeps
+   the transcript calm and puts the accent's weight on actual actions
+   (send button, badges) instead of every message the user sends. */
+.llm-chat-msg--user {
+  align-self: flex-end;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--text-h);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.llm-chat-msg--assistant {
+  align-self: flex-start;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.llm-chat-msg--error {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.llm-chat-hint,
+.llm-chat-error {
+  font-size: 12px;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.llm-chat-hint {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.llm-chat-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.llm-chat-composer {
+  border-top: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.llm-chat-context-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.llm-chat-context-toggle input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.llm-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.llm-chat-input {
+  flex: 1;
+  font: inherit;
+  font-size: 13px;
+  resize: none;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.llm-chat-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.llm-chat-input:hover:not(:disabled):not(:focus) {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.llm-chat-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.llm-chat-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Send is the panel's primary action — a teal icon button that outranks the
+   neutral .icon-btn base via the compound selector. */
+.llm-chat-send {
+  flex: none;
+}
+
+.llm-chat-send.icon-btn {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+  box-shadow: var(--shadow-1);
+}
+
+.llm-chat-send.icon-btn:not(:disabled):hover {
+  background: var(--accent-hover);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-2);
+}
+
+.llm-chat-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Stop takes the send button's slot while a reply is streaming — same quiet
+   icon-btn footprint, no extra chrome. It only reads as "active" (not just
+   another neutral icon button) via a faint danger tint, kept subtle since
+   stopping a reply is a light, reversible action, not a destructive one. */
+.llm-chat-stop {
+  flex: none;
+  color: var(--danger);
+}
+
+.llm-chat-stop:not(:disabled):hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.llm-chat-stop:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Controls added to the LLM settings modal for the network/provider options.
+   These live here (rather than in llm-settings.css) because that stylesheet
+   is owned elsewhere; keeping them in this feature's own CSS avoids touching
+   a file this feature doesn't own. */
+.llm-settings-hint {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.llm-settings-checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.llm-settings-checkbox-row input {
+  flex: none;
+  accent-color: var(--accent);
+}

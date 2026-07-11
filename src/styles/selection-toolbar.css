@@ -1,0 +1,54 @@
+/* Floating format toolbar shown above a text selection in the active block
+   (see SelectionToolbar.tsx). Anchored via fixed positioning at the {left,top}
+   the caller computes from the CodeMirror selection's screen coordinates. */
+.selection-toolbar {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 8px));
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+  padding: var(--space-0);
+  animation: tc-popover-in var(--dur-fast) var(--ease-out);
+}
+
+.selection-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-h);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.selection-toolbar-btn:hover {
+  background: var(--surface-hover);
+}
+
+.selection-toolbar-glyph {
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.selection-toolbar-glyph--bold {
+  font-weight: 700;
+}
+
+.selection-toolbar-glyph--italic {
+  font-style: italic;
+}
+
+.selection-toolbar-glyph--code {
+  font-family: var(--mono);
+  font-size: 11px;
+}

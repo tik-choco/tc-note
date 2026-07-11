@@ -1,0 +1,89 @@
+/* Floating popover shown when the user selects text inside a rendered
+   (non-editing) block — see TranslateHoverLayer.tsx. Positioned via fixed
+   coordinates computed independently from the native selection Range, since
+   this listens to window.getSelection() rather than a CodeMirror view (unlike
+   selection-toolbar.css, whose visual weight this otherwise mirrors). */
+.translate-popover {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 8px));
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+  max-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+  padding: 8px 10px;
+  animation: tc-popover-in 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--sans);
+}
+
+/* Used when there isn't enough room above the selection — opens downward
+   instead of flipping the whole layout. */
+.translate-popover--down {
+  transform: translate(-50%, 8px);
+}
+
+.translate-popover-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.translate-popover-speak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.translate-popover-speak:hover {
+  background: var(--surface-hover);
+}
+
+.translate-popover-status {
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.translate-popover-status--error {
+  color: var(--danger);
+}
+
+.translate-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Reading (pinyin/furigana) rendered directly over the selected text. */
+.translate-popover-ruby {
+  font-size: 15px;
+  line-height: 2.1;
+  color: var(--text-h);
+  ruby-position: over;
+}
+
+.translate-popover-ruby rt {
+  font-size: 10px;
+  color: var(--text-subtle);
+  user-select: none;
+}
+
+.translate-popover-translation {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+  word-break: break-word;
+}

@@ -1,0 +1,257 @@
+.layout {
+  display: flex;
+  height: 100svh;
+  text-align: left;
+  /* Positioning context for .sidebar-resize-handle, which is a sibling of
+     .sidebar (not a child) so it isn't clipped by the sidebar's
+     overflow: hidden — see the handle rules below. */
+  position: relative;
+}
+
+.sidebar {
+  width: var(--sidebar-width, 280px);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--bg-alt);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  gap: var(--space-3);
+  overflow: hidden;
+  will-change: width;
+  transition: width var(--dur-med) var(--ease-out), padding var(--dur-med) var(--ease-out),
+    border-color var(--dur-med) var(--ease-out);
+}
+
+.sidebar--collapsed {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-color: transparent;
+}
+
+/* While actively drag-resizing, the width must track the pointer with zero
+   lag — the transition above (built for collapse/expand) would otherwise
+   lag a frame behind every pointermove. Re-enabled the instant the drag
+   ends, so collapse/expand keeps animating normally. */
+.sidebar--resizing {
+  transition: none;
+}
+
+/* ---------- drag-to-resize handle (desktop only) ---------- */
+
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  /* Centers the 6px hit area on the sidebar/editor boundary (`left` is set
+     inline to the current sidebar width in px). */
+  transform: translateX(-50%);
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 5;
+}
+
+/* Invisible at rest — only a thin accent line appears, after a short delay,
+   on hover/focus, or immediately while actively dragging. */
+.sidebar-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.15s ease 0.4s;
+}
+
+.sidebar-resize-handle:hover::after,
+.sidebar-resize-handle:focus-visible::after {
+  opacity: 1;
+}
+
+.sidebar-resize-handle--active::after {
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+@media (max-width: 768px) {
+  .sidebar-resize-handle {
+    display: none;
+  }
+}
+
+/* Backdrop only exists for the mobile overlay sidebar. */
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Overlay sidebar: slides over the editor instead of squeezing it. The
+     width-collapse transition above would animate through unreadable
+     intermediate widths, so mobile animates transform instead. */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 15;
+    width: min(85vw, 320px);
+    transform: translateX(0);
+    will-change: transform;
+    transition: transform var(--dur-med) var(--ease-out);
+  }
+
+  .sidebar--collapsed {
+    transform: translateX(-100%);
+    width: min(85vw, 320px);
+    padding: 12px;
+    border-color: var(--border);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--overlay);
+    z-index: 14;
+    animation: tc-fade-in var(--dur-fast) var(--ease-out);
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ---------- tools row: search + import + history ---------- */
+
+.sidebar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sidebar-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.sidebar-search--active {
+  border-color: var(--accent);
+}
+
+.sidebar-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.sidebar-search-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text);
+}
+
+.sidebar-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.sidebar-search-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* Clear the native search-field reset "×" — the field is always visible, so
+   Escape (wired in Sidebar) is the clear affordance and the extra glyph only
+   clutters the row. */
+.sidebar-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Import / translation-history: quieter, squared to match the search field.
+   Scoped under .sidebar-tools so it out-specifies the shared .icon-btn
+   (which would otherwise re-round the corners via later source order). */
+.sidebar-tools .sidebar-tool-btn {
+  border-radius: var(--radius-md);
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.editor-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ---------- shared icon button (used in sidebar + toolbar) ---------- */
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-h);
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+.icon-btn--accent {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.icon-btn--active {
+  color: var(--accent);
+}
+
+.icon {
+  display: block;
+}

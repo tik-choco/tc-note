@@ -1,0 +1,277 @@
+/* AI / LLM-provider body. Rendered inside SettingsModal (no chrome of its
+   own); the overlay + modal rules are kept for any standalone use and share
+   the modern surface/elevation language of the unified modal. */
+.llm-settings-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: var(--z-modal);
+  animation: tc-fade-in var(--dur-med) var(--ease-out);
+}
+
+.llm-settings-modal {
+  width: min(480px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  padding: var(--space-5);
+  animation: tc-modal-in var(--dur-med) var(--ease-out);
+}
+
+.llm-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.llm-settings-header h2 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+  margin: 0;
+}
+
+/* Each group is its own section card — tc-town's card language (surface +
+   border + radius-lg + shadow-1). Spacing between cards comes from the
+   parent .settings-panel's gap, not a local margin. */
+.llm-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.llm-settings-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+/* --- Provider list --- */
+.llm-provider-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Each provider is a small sub-card on --surface-2 (tc-town's
+   tc-profile-card pattern, scaled down for a one-line row). */
+.llm-provider-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.llm-provider-item:hover {
+  box-shadow: var(--shadow-1);
+}
+
+/* The active provider (its radio is checked) gets a soft accent tint so the
+   current selection is legible at a glance. */
+.llm-provider-item:has(input:checked) {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-1);
+}
+
+.llm-provider-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.llm-provider-radio input[type="radio"] {
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.llm-provider-url {
+  color: var(--text-subtle);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llm-provider-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.llm-provider-empty {
+  color: var(--text-subtle);
+  font-size: 13px;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* --- Provider add/edit form ---
+   Its own sub-card, matching the provider list rows above. */
+.llm-provider-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+/* Text-like fields only — :not([type="checkbox"]) keeps the provider-mode
+   toggle (llm-settings-checkbox-row, styled in llm-chat.css) a plain 16px
+   checkbox instead of a full-width field. */
+.llm-provider-form input:not([type="checkbox"]),
+.llm-settings-row input:not([type="checkbox"]),
+.llm-settings-row select {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.llm-settings-row select {
+  cursor: pointer;
+}
+
+.llm-provider-form input::placeholder,
+.llm-settings-row input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.llm-provider-form input:not([type="checkbox"]):hover:not(:focus-visible),
+.llm-settings-row input:not([type="checkbox"]):hover:not(:focus-visible),
+.llm-settings-row select:hover {
+  background: var(--surface-hover);
+}
+
+.llm-provider-form input:not([type="checkbox"]):focus-visible,
+.llm-settings-row input:not([type="checkbox"]):focus-visible,
+.llm-settings-row select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.llm-provider-form-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* --- Buttons ---
+   Bare <button>s: the fetch-models action (a direct child of a section) and
+   the save/cancel pair in the provider form. tc-town's pill button language:
+   a soft accent pill for the primary action (fetch models / save), a quiet
+   neutral pill for everything else (cancel). */
+.llm-settings-section > button,
+.llm-provider-form-actions button {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.llm-settings-section > button:not(:disabled):hover,
+.llm-provider-form-actions button:not(:disabled):hover {
+  background: var(--surface-hover);
+}
+
+.llm-settings-section > button:not(:disabled):active,
+.llm-provider-form-actions button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.llm-settings-section > button:disabled,
+.llm-provider-form-actions button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Primary action: fetch models / save the provider — the accent pill. */
+.llm-settings-section > button:first-child,
+.llm-provider-form-actions button:first-child {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.llm-settings-section > button:first-child:not(:disabled):hover,
+.llm-provider-form-actions button:first-child:not(:disabled):hover {
+  background: var(--accent-bg-strong);
+  box-shadow: var(--shadow-1);
+}
+
+.llm-settings-section > button:first-child:disabled,
+.llm-provider-form-actions button:first-child:disabled {
+  color: var(--text-subtle);
+  background: var(--surface-3);
+  border-color: transparent;
+}
+
+/* --- Rows & feedback --- */
+.llm-settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.llm-settings-error {
+  color: var(--danger);
+  font-size: 12px;
+}

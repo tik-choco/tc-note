@@ -1,0 +1,100 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  box-shadow: var(--shadow-1);
+  position: relative;
+  z-index: 10;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 var(--space-1);
+  flex-shrink: 0;
+}
+
+.status {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.status--ok {
+  display: inline-flex;
+  align-items: center;
+  color: var(--success);
+}
+
+.status--error {
+  color: var(--danger);
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-5);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--text-subtle);
+}
+
+/* Quiet shortcuts-cheat-sheet trigger, pinned to the far right. Deliberately
+   understated — no border/background at rest — so it reads as a status-bar
+   affordance, not another toolbar button. */
+.status-bar-shortcuts-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.status-bar-shortcuts-btn:hover {
+  color: var(--text-h);
+  background: var(--surface-hover);
+}
+
+@media (max-width: 768px) {
+  /* Narrow screens: buttons scroll rather than wrap. The verbose "saving…"
+     text is the least essential item, so it goes — but errors are a
+     data-loss signal and the saved check is a 15px icon, so both stay. */
+  .toolbar {
+    overflow-x: auto;
+  }
+
+  .status {
+    display: none;
+  }
+
+  .status--ok {
+    display: inline-flex;
+  }
+
+  .status--error {
+    display: inline;
+  }
+}

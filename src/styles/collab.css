@@ -1,0 +1,327 @@
+.collab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collab-trigger--connected {
+  color: var(--success);
+}
+
+.collab-trigger--connecting {
+  color: var(--text);
+  opacity: 0.6;
+}
+
+.collab-trigger--error {
+  color: var(--danger);
+}
+
+.collab-avatars {
+  display: flex;
+}
+
+.collab-avatar {
+  width: 20px;
+  height: 20px;
+  margin-left: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.collab-avatar--overflow {
+  background: var(--text);
+  font-size: 9px;
+}
+
+.collab-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: 13px;
+  color: var(--text);
+  animation: tc-popover-in var(--dur-med) var(--ease-out);
+}
+
+/* Connection state as a small pill badge (dot + label) rather than plain
+   text — quiet by default, tinted to --success/--danger only when the state
+   actually needs attention. Shared by CollabButton and FolderShareButton. */
+.collab-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.collab-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.collab-badge--connected {
+  border-color: transparent;
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.collab-badge--connecting {
+  color: var(--text-subtle);
+}
+
+.collab-badge--error {
+  border-color: transparent;
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.collab-invite-row {
+  display: flex;
+  gap: 6px;
+}
+
+.collab-invite-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-h);
+  font-size: 12px;
+  transition: border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.collab-invite-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.collab-invite-input:hover {
+  border-color: var(--text-subtle);
+}
+
+.collab-invite-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.collab-peer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.collab-peer-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.collab-peer-empty {
+  color: var(--text-subtle);
+}
+
+.collab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* Destructive action (leave room / disable folder share): a quiet ghost that
+   only warms to danger on hover. */
+.collab-leave {
+  align-self: flex-start;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--danger);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.collab-leave:not(:disabled):hover {
+  background: var(--danger-bg);
+}
+
+.collab-leave:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Primary action when no room exists — the family's quiet accent pill
+   (tinted fill, not a solid one) rather than a loud CTA. Deliberately its
+   own class so future destructive styling of .collab-leave can't bleed
+   into it. */
+.collab-start {
+  align-self: flex-start;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  transition: background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.collab-start:hover {
+  background: var(--accent-bg-strong);
+  border-color: var(--accent);
+}
+
+.collab-start:active {
+  transform: scale(0.97);
+}
+
+.collab-join-row {
+  display: flex;
+  gap: 6px;
+}
+
+/* On narrow screens the toolbar scrolls horizontally (toolbar.css), which
+   makes it a scroll container that would clip an absolutely-positioned
+   popover to the toolbar strip — so the popover anchors to the viewport
+   below the toolbar instead. */
+@media (max-width: 768px) {
+  .collab-popover {
+    position: fixed;
+    top: 60px;
+    right: 8px;
+  }
+}
+
+.collab-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.collab-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.collab-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.collab-settings-row .collab-invite-input {
+  max-width: 150px;
+}
+
+.collab-color-input {
+  width: 32px;
+  height: 26px;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.status-bar-peers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.collab-room-source {
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.folder-share {
+  position: relative;
+  display: inline-flex;
+}
+
+.folder-share-trigger {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.folder-share-trigger--active {
+  opacity: 1;
+  color: var(--success);
+}
+
+.folder-share-popover {
+  position: fixed;
+  z-index: 20;
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: 12px;
+  color: var(--text);
+  animation: tc-popover-in var(--dur-med) var(--ease-out);
+}
+
+.folder-share-generate {
+  width: auto;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
