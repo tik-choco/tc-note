@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { CollabSession } from "../lib/collab";
 import { isValidRoomId } from "../lib/collab";
-import { LlmNet, type ConsumerPeerInfo, type LlmNetTransport } from "../lib/llmNet";
+import { LlmNet, type ConsumerPeerInfo, type KnownProviderInfo, type LlmNetTransport } from "../lib/llmNet";
 import { LlmNetworkRoom, type LlmNetworkRoomStatus } from "../lib/llmNetworkRoom";
 import { requestApiChatCompletionStreaming } from "../lib/llm";
 import { MistaiError, type ChatMessage, type ConsumerStatus, type ProviderLogEntry } from "@tik-choco/mistai";
@@ -135,6 +135,7 @@ export function useLlmNet(params: UseLlmNetParams): UseLlmNetResult {
 
   const [providerCount, setProviderCount] = useState(0);
   const [firstProviderId, setFirstProviderId] = useState<string | null>(null);
+  const [providerTable, setProviderTable] = useState<KnownProviderInfo[]>([]);
   const [consumerPeers, setConsumerPeers] = useState<ConsumerPeerInfo[]>([]);
   const [providerLogs, setProviderLogs] = useState<ProviderLogEntry[]>([]);
   const [dedicatedRoomStatus, setDedicatedRoomStatus] = useState<LlmNetworkRoomStatus>("idle");
@@ -207,6 +208,7 @@ export function useLlmNet(params: UseLlmNetParams): UseLlmNetResult {
       netRef.current = null;
       setProviderCount(0);
       setFirstProviderId(null);
+      setProviderTable([]);
       setConsumerPeers([]);
       setProviderLogs([]);
       return;
@@ -217,6 +219,7 @@ export function useLlmNet(params: UseLlmNetParams): UseLlmNetResult {
       onProvidersChange: (count) => {
         setProviderCount(count);
         setFirstProviderId(net.firstProviderId);
+        setProviderTable(net.providers);
       },
       onConsumersChange: () => setConsumerPeers(net.consumerPeers),
       onProviderLog: (entry) => {
@@ -224,6 +227,13 @@ export function useLlmNet(params: UseLlmNetParams): UseLlmNetResult {
           const withoutEntry = current.filter((logEntry) => logEntry.id !== entry.id);
           return [entry, ...withoutEntry].slice(0, 50);
         });
+      },
+      // The preset's model, when resolved — read fresh on every provider_hello
+      // (see LlmNet's getAdvertisedModels doc) so this always reflects the
+      // current shared-config selection without rebuilding LlmNet.
+      getAdvertisedModels: () => {
+        const model = resolvedRef.current?.model.trim();
+        return model ? [model] : undefined;
       },
     });
     netRef.current = net;
@@ -243,6 +253,7 @@ export function useLlmNet(params: UseLlmNetParams): UseLlmNetResult {
       netRef.current = null;
       setProviderCount(0);
       setFirstProviderId(null);
+      setProviderTable([]);
       setConsumerPeers([]);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -334,7 +345,7 @@ export function useLlmNet(params: UseLlmNetParams): UseLlmNetResult {
       ? { phase: "idle" }
       : providerCount === 0
         ? { phase: "searching" }
-        : { phase: "connected", providerId: firstProviderId ?? "" },
+        : { phase: "connected", providerId: firstProviderId ?? "", providers: providerTable },
     consumerPeers,
     providerLogs,
   };

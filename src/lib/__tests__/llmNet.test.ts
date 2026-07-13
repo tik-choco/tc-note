@@ -116,21 +116,62 @@ describe("LlmNet orchestration", () => {
     await expect(promise).rejects.toMatchObject({ code: "PROVIDER_DISCONNECTED" });
   });
 
-  it("fails over to a second discovered provider when the first one's request errors", async () => {
+  // Failover eligibility now mirrors mistai's ConsumerClient (client.ts's
+  // isFailoverEligible): only PROVIDER_DISCONNECTED, REQUEST_TIMEOUT, or a
+  // REMOTE_ERROR carrying code "unsupported_service" retry to another
+  // provider. A generic upstream failure (any other REMOTE_ERROR) does not —
+  // see the "does not fail over on a generic upstream error" test below,
+  // which pins the narrower-than-before behavior.
+
+  it("fails over to a second discovered provider when the first one's request times out", async () => {
     const hub = makeHub();
-    const consumer = hub.addPeer("A", (transport) => new LlmNet({ transport }));
+    const consumer = hub.addPeer("A", (transport) => new LlmNet({ transport, requestTimeoutMs: 20 }));
     const flaky = hub.addPeer("B", (transport) => new LlmNet({ transport }));
     const backup = hub.addPeer("C", (transport) => new LlmNet({ transport }));
 
-    flaky.net.setCallLlm(() => Promise.reject(new Error("upstream exploded")));
+    // Never resolves and never streams a chunk, so the consumer's own
+    // requestTimeoutMs (not the provider) is what fires REQUEST_TIMEOUT.
+    // setCallLlm's first activation broadcasts provider_hello to everyone
+    // already in the room (see announceProvider), so only "flaky" turns
+    // provider mode on before the request starts — otherwise "backup"'s own
+    // broadcast would make it known too and selectProvider's random
+    // tie-break among eligible providers could pick it first, making this
+    // test non-deterministic.
+    flaky.net.setCallLlm(() => new Promise<string>(() => {}));
+    expect(consumer.net.providerCount).toBe(1);
+
+    const promise = consumer.net.requestChat([{ role: "user", content: "hi" }], undefined);
     backup.net.setCallLlm(async () => "from backup");
 
-    flaky.net.handlePeerConnected("A");
-    backup.net.handlePeerConnected("A");
-    expect(consumer.net.providerCount).toBe(2);
-    expect(consumer.net.firstProviderId).toBe("B"); // the flaky one is discovered first
+    const reply = await promise;
+    expect(reply).toBe("from backup");
+  });
 
-    const reply = await consumer.net.requestChat([{ role: "user", content: "hi" }], undefined);
+  it("fails over to a second discovered provider when the first stopped serving without leaving the room", async () => {
+    const hub = makeHub();
+    const consumer = hub.addPeer("A", (transport) => new LlmNet({ transport }));
+    const stale = hub.addPeer("B", (transport) => new LlmNet({ transport }));
+    const backup = hub.addPeer("C", (transport) => new LlmNet({ transport }));
+
+    // "stale" announces itself as a provider (broadcasting to everyone
+    // already in the room, including "backup"), then turns provider mode off
+    // again without leaving the room — the consumer's table still lists it.
+    // "backup" doesn't turn provider mode on yet, so it stays unknown to the
+    // consumer until after the request starts (see the timeout test above
+    // for why that matters for determinism).
+    stale.net.setCallLlm(async () => "should not be used");
+    stale.net.setCallLlm(null);
+    expect(consumer.net.providerCount).toBe(1);
+
+    // Only "stale" is known when the request is sent, so the initial pick is
+    // deterministically "stale". It immediately rejects with an
+    // unsupported_service llm_error (LlmNet.handleMessage's rejectLlmRequest
+    // branch), which is failover-eligible; "backup" registers in time for
+    // that retry.
+    const promise = consumer.net.requestChat([{ role: "user", content: "hi" }], undefined);
+    backup.net.setCallLlm(async () => "from backup");
+
+    const reply = await promise;
     expect(reply).toBe("from backup");
   });
 
@@ -147,6 +188,30 @@ describe("LlmNet orchestration", () => {
     // error's class/code (see ProviderService.handleMessage's catch).
     const promise = consumer.net.requestChat([{ role: "user", content: "hi" }], undefined);
     await expect(promise).rejects.toMatchObject({ code: "REMOTE_ERROR", message: "nope" });
+  });
+
+  it("does not fail over on a generic upstream error even when a second provider is known", async () => {
+    const hub = makeHub();
+    const consumer = hub.addPeer("A", (transport) => new LlmNet({ transport }));
+    const flaky = hub.addPeer("B", (transport) => new LlmNet({ transport }));
+    const backup = hub.addPeer("C", (transport) => new LlmNet({ transport }));
+
+    flaky.net.setCallLlm(() => Promise.reject(new Error("upstream exploded")));
+
+    // Only "flaky" is known when the request is sent (see the timeout test
+    // above for why "backup" must not have broadcast yet), so the initial
+    // pick is deterministically "flaky" — "backup" registers right after, so
+    // it *is* available for a retry, proving the lack of failover below is
+    // really about eligibility and not just backup being unknown.
+    expect(consumer.net.providerCount).toBe(1);
+    const promise = consumer.net.requestChat([{ role: "user", content: "hi" }], undefined);
+    backup.net.setCallLlm(async () => "from backup");
+
+    // A plain upstream failure (REMOTE_ERROR with no unsupported_service
+    // code) is not failover-eligible, so this rejects instead of silently
+    // routing to "backup" — a deliberate narrowing vs. tc-note's old
+    // "retry any error" failover, matching mistai's ConsumerClient.
+    await expect(promise).rejects.toMatchObject({ code: "REMOTE_ERROR", message: "upstream exploded" });
   });
 
   it("forgets a provider when it disconnects", () => {
