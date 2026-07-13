@@ -4,7 +4,16 @@
 // a file-based bundle format. Reuses mistlib's own note-creation path
 // (saveNote/setNoteFolder/createFolder) rather than touching note storage
 // directly.
+//
+// Dual-read (contract B, see storage-fix-spec / SHARED_BUS.md): older items
+// inline every field. Newer items keep only a small preview (id, timestamp,
+// mode, sourcePreview, targetLanguage, ...) plus a `bodyCid` pointing at the
+// heavy fields (sourceText, translations, proofread, explain) content-
+// addressed via mistlib's storage_add. readHistory() resolves both shapes
+// transparently.
 import { createFolder, listFolders, listNotes, saveNote, setNoteFolder } from "./mistlib";
+import { storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { ensureMistNode } from "./mistNode";
 
 // Exported so autoImport.ts's `storage` event listener can filter to this
 // exact key without duplicating the literal.
@@ -49,13 +58,50 @@ function isTranslationHistoryItem(value: unknown): value is TranslationHistoryIt
   return true;
 }
 
-export function readHistory(): TranslationHistoryItem[] {
+// Resolves one raw history entry read from HISTORY_KEY. Old-format entries
+// (every field inline) pass through as-is; new-format entries (id + preview
+// fields + bodyCid) are expanded by fetching the heavy fields from mistlib.
+// Returns null for anything unrecognized/unresolvable so the caller can
+// silently skip it (same tolerance as the old plain isTranslationHistoryItem
+// filter).
+async function resolveHistoryItem(value: unknown): Promise<TranslationHistoryItem | null> {
+  if (isTranslationHistoryItem(value)) return value;
+
+  if (value === null || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.id !== "string" || typeof v.bodyCid !== "string") return null;
+
+  try {
+    await ensureMistNode();
+    const bytes = await storage_get(v.bodyCid);
+    const body: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    if (body === null || typeof body !== "object") return null;
+    const b = body as Record<string, unknown>;
+
+    const sourceText = typeof b.sourceText === "string" ? b.sourceText : typeof v.sourcePreview === "string" ? v.sourcePreview : "";
+    const targetLanguage = typeof v.targetLanguage === "string" ? v.targetLanguage : typeof b.targetLanguage === "string" ? b.targetLanguage : "";
+    const translations = Array.isArray(b.translations) && b.translations.every(isTranslationVariant) ? (b.translations as TranslationVariant[]) : [];
+    const createdAt = typeof v.createdAt === "number" ? v.createdAt : typeof v.timestamp === "number" ? v.timestamp : 0;
+
+    return { id: v.id, createdAt, sourceText, targetLanguage, translations };
+  } catch (error) {
+    console.warn(`importTranslations: failed to resolve bodyCid for history item "${v.id}"`, error);
+    return null;
+  }
+}
+
+export async function readHistory(): Promise<TranslationHistoryItem[]> {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isTranslationHistoryItem);
+    const items: TranslationHistoryItem[] = [];
+    for (const value of parsed) {
+      const resolved = await resolveHistoryItem(value);
+      if (resolved) items.push(resolved);
+    }
+    return items;
   } catch {
     return [];
   }
@@ -96,7 +142,7 @@ export function ensureTranslationFolder(): string {
 }
 
 export async function importTranslationHistory(): Promise<ImportTranslationsResult> {
-  const history = readHistory();
+  const history = await readHistory();
   const existingIds = new Set(listNotes().map((n) => n.id));
   const folderId = ensureTranslationFolder();
 

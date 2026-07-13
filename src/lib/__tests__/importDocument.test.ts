@@ -11,6 +11,14 @@ const { saveNote, setNoteFolder } = vi.hoisted(() => ({
 
 vi.mock("../mistlib", () => ({ saveNote, setNoteFolder }));
 
+// storage_get/ensureMistNode back the cid dual-read path (see contract A /
+// storage-fix-spec): mock both directly, matching noteInbox.test.ts's style.
+const { ensureMistNode } = vi.hoisted(() => ({ ensureMistNode: vi.fn() }));
+vi.mock("../mistNode", () => ({ ensureMistNode }));
+
+const { storage_get } = vi.hoisted(() => ({ storage_get: vi.fn() }));
+vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({ storage_get }));
+
 import { importDocument, importPdfViewerDocument, listPdfViewerDocuments } from "../importDocument";
 
 const OCR_INDEX_KEY = "mist_ocr_markdown_index";
@@ -42,14 +50,15 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal("localStorage", createMemoryStorage());
   saveNote.mockImplementation(async (id: string, title: string) => makeMeta(id, title));
+  ensureMistNode.mockResolvedValue(undefined);
 });
 
 describe("listPdfViewerDocuments", () => {
-  it("returns an empty list when both indexes are empty", () => {
-    expect(listPdfViewerDocuments()).toEqual([]);
+  it("returns an empty list when both indexes are empty", async () => {
+    expect(await listPdfViewerDocuments()).toEqual([]);
   });
 
-  it("lists a document with content, summary, and translations", () => {
+  it("lists a document with content, summary, and translations", async () => {
     localStorage.setItem(
       OCR_INDEX_KEY,
       JSON.stringify({ "meeting.pdf": { content: "本文", updatedAt: 100, summary: "要約", summaryUpdatedAt: 200 } }),
@@ -59,26 +68,26 @@ describe("listPdfViewerDocuments", () => {
       JSON.stringify({ "meeting.pdf": { en: { content: "English", updatedAt: 300 }, ko: { content: "한국어", updatedAt: 150 } } }),
     );
 
-    const docs = listPdfViewerDocuments();
+    const docs = await listPdfViewerDocuments();
     expect(docs).toHaveLength(1);
     expect(docs[0]).toEqual({ pdfName: "meeting.pdf", hasSummary: true, languages: ["en", "ko"], updatedAt: 300 });
   });
 
-  it("skips old-format entries that are bare CID strings", () => {
+  it("skips old-format entries that are bare CID strings", async () => {
     localStorage.setItem(OCR_INDEX_KEY, JSON.stringify({ "old.pdf": "bafy123" }));
     localStorage.setItem(TRANSLATED_INDEX_KEY, JSON.stringify({ "old.pdf": { en: "bafy456" } }));
 
-    expect(listPdfViewerDocuments()).toEqual([]);
+    expect(await listPdfViewerDocuments()).toEqual([]);
   });
 
-  it("returns an empty list when localStorage JSON is malformed", () => {
+  it("returns an empty list when localStorage JSON is malformed", async () => {
     localStorage.setItem(OCR_INDEX_KEY, "{not json");
     localStorage.setItem(TRANSLATED_INDEX_KEY, "{also not json");
 
-    expect(listPdfViewerDocuments()).toEqual([]);
+    expect(await listPdfViewerDocuments()).toEqual([]);
   });
 
-  it("sorts documents by most recently updated first", () => {
+  it("sorts documents by most recently updated first", async () => {
     localStorage.setItem(
       OCR_INDEX_KEY,
       JSON.stringify({
@@ -87,8 +96,33 @@ describe("listPdfViewerDocuments", () => {
       }),
     );
 
-    const docs = listPdfViewerDocuments();
+    const docs = await listPdfViewerDocuments();
     expect(docs.map((d) => d.pdfName)).toEqual(["newer.pdf", "older.pdf"]);
+  });
+
+  it("dual-reads a new-format entry that carries a cid instead of inline content (contract A)", async () => {
+    localStorage.setItem(
+      OCR_INDEX_KEY,
+      JSON.stringify({ "cidonly.pdf": { cid: "bafy-ocr-1", updatedAt: 100 } }),
+    );
+    localStorage.setItem(
+      TRANSLATED_INDEX_KEY,
+      JSON.stringify({ "cidonly.pdf": { en: { cid: "bafy-tr-1", updatedAt: 100 } } }),
+    );
+    storage_get.mockImplementation(async (cid: string) => {
+      const body = cid === "bafy-ocr-1" ? "OCR本文" : "English body";
+      return new TextEncoder().encode(body);
+    });
+
+    const docs = await listPdfViewerDocuments();
+    expect(docs).toHaveLength(1);
+    expect(docs[0].languages).toEqual(["en"]);
+
+    const result = await importPdfViewerDocument("cidonly.pdf", null);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(saveNote).toHaveBeenCalledWith(expect.any(String), "cidonly.pdf", "OCR本文");
+    expect(saveNote).toHaveBeenCalledWith(expect.any(String), "cidonly.pdf (en)", "English body");
   });
 });
 

@@ -14,13 +14,15 @@
 import { saveNote, setNoteFolder, type NoteMeta } from "./mistlib";
 import { newId } from "./util";
 import { readShared, subscribeShared } from "./sharedBus";
+import { storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { ensureMistNode } from "./mistNode";
 
 const OCR_INDEX_KEY = "mist_ocr_markdown_index";
 const TRANSLATED_INDEX_KEY = "mist_translated_markdown_index";
 const OCR_INDEX_TOPIC = "ocr-markdown-index";
 
 type OcrEntry = { content?: string; updatedAt?: number; summary?: string; summaryUpdatedAt?: number; cid?: string };
-type TranslationEntry = { content: string; updatedAt: number };
+type TranslationEntry = { content?: string; cid?: string; updatedAt?: number };
 
 export type PdfViewerDocumentSummary = {
   pdfName: string;
@@ -78,34 +80,80 @@ function parseOcrIndexRecord(raw: Record<string, unknown>): Record<string, OcrEn
   return index;
 }
 
-function readOcrIndex(): Record<string, OcrEntry> {
-  // Prefer the shared-bus record (sharedBus.ts): tc-pdf-viewer publishes the
-  // whole index snapshot there on every write, notifying subscribers. Fall
-  // back to the legacy direct localStorage read if the record is absent or
-  // malformed (e.g. an older tc-pdf-viewer build that predates the bus).
-  const shared = readShared(OCR_INDEX_TOPIC);
-  const sharedIndex = shared?.meta?.index;
-  if (sharedIndex !== null && typeof sharedIndex === "object" && !Array.isArray(sharedIndex)) {
-    return parseOcrIndexRecord(sharedIndex as Record<string, unknown>);
+// Resolves one entry's body: prefer the inline `content` (old format, or
+// already-resolved), else fetch the CID'd body from mistlib (new format —
+// see contract A in protocol/docs/data-contracts/docs/SHARED_BUS.md / the
+// storage-fix dual-read rules). Never throws: a storage_get failure is
+// logged and treated as "no content" so one bad entry can't break the whole
+// index.
+async function resolveEntryContent(content: string | undefined, cid: string | undefined): Promise<string | undefined> {
+  if (typeof content === "string") return content;
+  if (!cid) return undefined;
+  try {
+    await ensureMistNode();
+    const bytes = await storage_get(cid);
+    return new TextDecoder().decode(bytes);
+  } catch (error) {
+    console.warn(`importDocument: failed to resolve cid "${cid}"`, error);
+    return undefined;
   }
-
-  const raw = readJsonRecord(OCR_INDEX_KEY);
-  return parseOcrIndexRecord(raw);
 }
 
-function readTranslatedIndex(): Record<string, Record<string, TranslationEntry>> {
+async function readOcrIndex(): Promise<Record<string, OcrEntry>> {
+  // Prefer the shared-bus record (sharedBus.ts): tc-pdf-viewer publishes an
+  // index snapshot there on every write, notifying subscribers. Two shapes
+  // are supported (dual-read): the old format inlines the whole index in
+  // `meta.index`; the new format (contract A) keeps `meta` small and
+  // content-addresses the index snapshot itself via `cid`. Fall back to the
+  // legacy direct localStorage read if the record is absent or malformed
+  // (e.g. an older tc-pdf-viewer build that predates the bus).
+  const shared = readShared(OCR_INDEX_TOPIC);
+  const sharedIndex = shared?.meta?.index;
+  let record: Record<string, OcrEntry> | null = null;
+
+  if (sharedIndex !== null && sharedIndex !== undefined && typeof sharedIndex === "object" && !Array.isArray(sharedIndex)) {
+    record = parseOcrIndexRecord(sharedIndex as Record<string, unknown>);
+  } else if (shared?.cid) {
+    try {
+      await ensureMistNode();
+      const bytes = await storage_get(shared.cid);
+      const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+      if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+        record = parseOcrIndexRecord(parsed as Record<string, unknown>);
+      }
+    } catch (error) {
+      console.warn("importDocument: failed to resolve shared ocr-markdown-index cid", error);
+    }
+  }
+
+  if (record === null) {
+    record = parseOcrIndexRecord(readJsonRecord(OCR_INDEX_KEY));
+  }
+
+  for (const entry of Object.values(record)) {
+    entry.content = await resolveEntryContent(entry.content, entry.cid);
+  }
+  return record;
+}
+
+async function readTranslatedIndex(): Promise<Record<string, Record<string, TranslationEntry>>> {
   const raw = readJsonRecord(TRANSLATED_INDEX_KEY);
   const index: Record<string, Record<string, TranslationEntry>> = {};
   for (const [pdfName, langs] of Object.entries(raw)) {
     if (langs === null || typeof langs !== "object") continue;
     const entries: Record<string, TranslationEntry> = {};
     for (const [lang, value] of Object.entries(langs as Record<string, unknown>)) {
-      // Old format stored a bare CID string per language; skip those.
+      // Old format stored a bare CID string per language; skip those (no
+      // separate content/cid fields to dual-read from).
       if (typeof value === "string") continue;
       if (value === null || typeof value !== "object") continue;
       const entry = value as Partial<TranslationEntry>;
-      if (typeof entry.content !== "string") continue;
-      entries[lang] = { content: entry.content, updatedAt: entry.updatedAt ?? 0 };
+      const content = await resolveEntryContent(
+        typeof entry.content === "string" ? entry.content : undefined,
+        typeof entry.cid === "string" ? entry.cid : undefined,
+      );
+      if (content === undefined) continue;
+      entries[lang] = { content, updatedAt: entry.updatedAt ?? 0 };
     }
     if (Object.keys(entries).length > 0) index[pdfName] = entries;
   }
@@ -114,9 +162,9 @@ function readTranslatedIndex(): Record<string, Record<string, TranslationEntry>>
 
 // Lists tc-pdf-viewer documents available to import, read directly from the
 // shared localStorage (both apps run on the same origin).
-export function listPdfViewerDocuments(): PdfViewerDocumentSummary[] {
-  const ocrIndex = readOcrIndex();
-  const translatedIndex = readTranslatedIndex();
+export async function listPdfViewerDocuments(): Promise<PdfViewerDocumentSummary[]> {
+  const ocrIndex = await readOcrIndex();
+  const translatedIndex = await readTranslatedIndex();
 
   const pdfNames = new Set([...Object.keys(ocrIndex), ...Object.keys(translatedIndex)]);
   const results: PdfViewerDocumentSummary[] = [];
@@ -158,6 +206,9 @@ function partsForPdf(pdfName: string, ocrEntry: OcrEntry | undefined, translatio
   }
 
   for (const [lang, translation] of Object.entries(translations)) {
+    // readTranslatedIndex only ever inserts entries whose content resolved
+    // successfully (dual-read), so this is always defined here.
+    if (typeof translation.content !== "string") continue;
     parts.push({ key: `pdf:${pdfName}:tr:${lang}`, pdfName, title: `${pdfName} (${lang})`, content: translation.content });
   }
 
@@ -168,9 +219,9 @@ function partsForPdf(pdfName: string, ocrEntry: OcrEntry | undefined, translatio
 // translation) across all tc-pdf-viewer documents, each with a stable
 // idempotency key — used by autoImport.ts to import fine-grained pieces one
 // at a time and dedupe across scans.
-export function listPdfViewerDocumentParts(): PdfViewerDocumentPart[] {
-  const ocrIndex = readOcrIndex();
-  const translatedIndex = readTranslatedIndex();
+export async function listPdfViewerDocumentParts(): Promise<PdfViewerDocumentPart[]> {
+  const ocrIndex = await readOcrIndex();
+  const translatedIndex = await readTranslatedIndex();
   const pdfNames = new Set([...Object.keys(ocrIndex), ...Object.keys(translatedIndex)]);
 
   const parts: PdfViewerDocumentPart[] = [];
@@ -186,8 +237,8 @@ export async function importPdfViewerDocument(
   pdfName: string,
   folderId: string | null,
 ): Promise<ImportDocumentResult> {
-  const ocrEntry = readOcrIndex()[pdfName];
-  const translations = readTranslatedIndex()[pdfName] ?? {};
+  const ocrEntry = (await readOcrIndex())[pdfName];
+  const translations = (await readTranslatedIndex())[pdfName] ?? {};
   const parts = partsForPdf(pdfName, ocrEntry, translations);
 
   const notes: NoteMeta[] = [];

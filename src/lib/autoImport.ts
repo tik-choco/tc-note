@@ -87,7 +87,7 @@ async function scanOnce(): Promise<number> {
   let created = 0;
 
   let pdfFolderId: string | null = null;
-  for (const part of listPdfViewerDocumentParts()) {
+  for (const part of await listPdfViewerDocumentParts()) {
     if (keySet.has(part.key)) continue;
     try {
       if (pdfFolderId === null) pdfFolderId = ensurePdfFolder();
@@ -101,7 +101,7 @@ async function scanOnce(): Promise<number> {
     recordKey(store, keySet, part.key);
   }
 
-  const history = readHistory();
+  const history = await readHistory();
   if (history.length > 0) {
     const existingNoteIds = new Set(listNotes().map((n) => n.id));
     let translationFolderId: string | null = null;
