@@ -152,11 +152,92 @@
 }
 
 .ai-queue-row-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   font-size: 11px;
   color: var(--text-subtle);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Status pill — same shape/weight as @tik-choco/mistai's request-log badges
+   (.mistai-log-badge in mistai's ui.css: pill, 11px bold, tight padding) so
+   this indicator and mistai's own provider/consumer panels read as one
+   family. The neutral tone uses theme surface/text tokens like the rest of
+   this card; streaming/done/error are mistai's fixed meaning colors
+   (yellow/green/red), tuned with a light/dark pair each so they stay legible
+   against --surface in both themes rather than reusing mistai's light-only
+   pastels verbatim. */
+.ai-queue-status-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ai-queue-row-chars {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-queue-status-badge--neutral {
+  background: var(--surface-3);
+  color: var(--text-subtle);
+}
+
+.ai-queue-status-badge--streaming {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.ai-queue-status-badge--done {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.ai-queue-status-badge--error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+:root[data-theme="dark"] .ai-queue-status-badge--streaming {
+  background: rgba(217, 119, 6, 0.28);
+  color: #fcd34d;
+}
+
+:root[data-theme="dark"] .ai-queue-status-badge--done {
+  background: rgba(21, 128, 61, 0.28);
+  color: #6ee7a0;
+}
+
+:root[data-theme="dark"] .ai-queue-status-badge--error {
+  background: rgba(185, 28, 28, 0.3);
+  color: #fca5a5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .ai-queue-status-badge--streaming {
+    background: rgba(217, 119, 6, 0.28);
+    color: #fcd34d;
+  }
+
+  :root:not([data-theme]) .ai-queue-status-badge--done {
+    background: rgba(21, 128, 61, 0.28);
+    color: #6ee7a0;
+  }
+
+  :root:not([data-theme]) .ai-queue-status-badge--error {
+    background: rgba(185, 28, 28, 0.3);
+    color: #fca5a5;
+  }
 }
 
 @media (max-width: 480px) {

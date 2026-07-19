@@ -29,6 +29,21 @@ const STATUS_LABEL_KEY: Record<AiTaskStatus, TranslationKey> = {
   cancelled: "aiQueue.status.cancelled",
 };
 
+// Badge tone per status, matching @tik-choco/mistai's request-log badges
+// (.mistai-log-badge.started/streaming/done/error in mistai's ui.css) so the
+// two "is an LLM call in flight" indicators in this app family read the same
+// way. mistai has no status that maps to "queued"/"cancelling"/"cancelled"
+// (it only tracks a single request's started/streaming/done/error), so those
+// three fall back to a quiet neutral pill rather than inventing a new tone.
+const STATUS_BADGE_TONE: Record<AiTaskStatus, "neutral" | "streaming" | "done" | "error"> = {
+  queued: "neutral",
+  running: "streaming",
+  cancelling: "neutral",
+  complete: "done",
+  failed: "error",
+  cancelled: "neutral",
+};
+
 /** Global floating "background AI work" indicator (bottom-right). Renders
  * nothing when the queue is empty — tasks that finish and aren't retained
  * disappear from the queue on their own (see AI_TASK_RETENTION_MS), so this
@@ -98,7 +113,9 @@ export function AiQueueIndicator(props: { onOpenTask?: (task: AiTask) => void })
                 </button>
               </div>
               <div class="ai-queue-row-status">
-                {t(STATUS_LABEL_KEY[task.status])}
+                <span class={`ai-queue-status-badge ai-queue-status-badge--${STATUS_BADGE_TONE[task.status]}`}>
+                  {t(STATUS_LABEL_KEY[task.status])}
+                </span>
                 {typeof chars === "number" && chars > 0 && (
                   <span class="ai-queue-row-chars"> · {t("aiQueue.streamedChars", { count: chars })}</span>
                 )}

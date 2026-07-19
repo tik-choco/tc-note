@@ -10,8 +10,10 @@
 @import "./styles/outline.css";
 @import "./styles/toast.css";
 @import "./styles/collab.css";
-@import "./styles/llm-settings.css";
 @import "./styles/llm-chat.css";
+@import "./styles/llm-connection.css";
+@import "./styles/llm-network.css";
+@import "./styles/llm-tasks.css";
 @import "./styles/review-panel.css";
 @import "./styles/app-settings.css";
 @import "./styles/settings.css";

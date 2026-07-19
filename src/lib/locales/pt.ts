@@ -22,7 +22,9 @@ export const pt: Record<TranslationKey, Entry> = {
 
   "settings.title": "Configurações",
   "settings.tab.display": "Tela",
-  "settings.tab.ai": "AI",
+  "settings.tab.connection": "Conexão",
+  "settings.tab.network": "AI Network",
+  "settings.tab.tasks": "Tarefas",
 
   "mermaidBlock.clickToEdit": "Clique para editar",
   "mermaidBlock.renderError": (params) => `Falha ao renderizar o diagrama: ${params.error}`,
@@ -131,11 +133,8 @@ export const pt: Record<TranslationKey, Entry> = {
   "sidebar.deleteFolder": "Excluir pasta",
   "sidebar.unfiledSection": "Sem classificação",
 
-  "llmSettings.title": "Configurações do provedor de LLM",
-  "llmSettings.close": "Fechar",
   "llmSettings.providersLabel": "Provedores",
   "llmSettings.addProvider": "Adicionar provedor",
-  "llmSettings.edit": "Editar",
   "llmSettings.delete": "Excluir",
   "llmSettings.noProviders": "Nenhum provedor cadastrado",
   "llmSettings.labelPlaceholder": "Rótulo (ex.: OpenAI)",
@@ -158,18 +157,15 @@ export const pt: Record<TranslationKey, Entry> = {
   "llmSettings.noProvidersForPreset": "Adicione um provedor primeiro",
   "llmSettings.presetLabelPlaceholder": "Rótulo (ex.: Resposta rápida)",
   "llmSettings.presetProviderLabel": "Provedor",
+  "llmSettings.presetDefaultBadge": "Padrão",
   "llmSettings.temperatureLabel": "Temperature (opcional)",
   "llmSettings.temperaturePlaceholder": "ex.: 0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort (opcional)",
   "llmSettings.reasoningEffortPlaceholder": "ex.: medium",
-  "llmSettings.defaultPresetHint": "Escolha qual predefinição usar por padrão.",
   "llmSettings.unknownProvider": "(provedor desconhecido)",
 
-  "llmSettings.networkSection": "AI Network",
   "llmSettings.networkTransportNote":
     "A AI Network usa a sala de colaboração da qual você participa como meio de comunicação (é algo separado do próprio recurso de compartilhamento de páginas).",
-  "llmSettings.connectionLabel": "Conexão",
-  "llmSettings.connection.api": "API direta",
   "llmSettings.connection.network": "Usar um provedor da AI Network",
   "llmSettings.connection.networkHint":
     "Entre em uma sala de colaboração para usar a AI Network. Um provedor da sala processa suas solicitações.",
@@ -185,6 +181,13 @@ export const pt: Record<TranslationKey, Entry> = {
   "llmSettings.providerModeHint":
     "Quando ativado, outros participantes da mesma sala podem enviar solicitações que serão processadas com a sua chave de API.",
   "llmSettings.providerModeNeedsProvider": "Configure primeiro um provedor e um modelo de LLM.",
+
+  "llmSettings.tasksHint": "Atribua qual modelo usar para cada finalidade.",
+  "llmSettings.tasksDefaultModelLabel": "Modelo padrão",
+  "llmSettings.tasksDefaultModelDesc":
+    "Usado para chat, revisão e em qualquer outro lugar onde nenhum modelo específico esteja definido.",
+  "llmSettings.tasksEmbeddingModelDesc":
+    "ID do modelo usado para embeddings (por exemplo, busca em notas). Deixe em branco para desativar.",
 
   "llmChat.title": "Assistente",
   "llmChat.close": "Fechar",

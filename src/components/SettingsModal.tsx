@@ -4,32 +4,85 @@ import { useT } from "../hooks/useAppSettings";
 import { useModalA11y } from "../hooks/useModalA11y";
 import { useOverlayDismiss } from "../hooks/useOverlayDismiss";
 import type { TranslationKey } from "../lib/i18n";
+import type { LlmConnection, LlmSettings, ReasoningEffort } from "../lib/llmSettings";
+import type { LlmProviderV1, ModelPresetV1, SharedLlmConfigV1 } from "../lib/llmConfig";
+import type { UseLlmNetResult } from "../hooks/useLlmNet";
 import { Icon } from "./Icon";
 import { AppSettingsPanel } from "./AppSettingsPanel";
-import { LlmSettingsPanel, type LlmSettingsPanelProps } from "./LlmSettingsPanel";
+import { LlmConnectionPanel } from "./LlmConnectionPanel";
+import { LlmNetworkPanel } from "./LlmNetworkPanel";
+import { LlmTasksPanel } from "./LlmTasksPanel";
 
-export type SettingsTab = "display" | "ai";
+export type SettingsTab = "display" | "connection" | "network" | "tasks";
+
+export type SettingsModalProps = {
+  settings: LlmSettings;
+  /** The shared, co-owned tc-shared-llm-config-v1 config (providers/presets/defaultPresetId/network.roomId). */
+  shared: SharedLlmConfigV1;
+  onAddProvider: (provider: LlmProviderV1) => void;
+  onUpdateProvider: (id: string, patch: Partial<Omit<LlmProviderV1, "id">>) => void;
+  onRemoveProvider: (id: string) => void;
+  onAddPreset: (preset: ModelPresetV1) => void;
+  onUpdatePreset: (id: string, patch: Partial<Omit<ModelPresetV1, "id">>) => void;
+  onRemovePreset: (id: string) => void;
+  onSetDefaultPresetId: (id: string) => void;
+  onSetEmbeddingModel: (model: string | null) => void;
+  onSetReasoningEffort: (effort: ReasoningEffort) => void;
+  onSetConnection: (connection: LlmConnection) => void;
+  onSetProviderModeEnabled: (enabled: boolean) => void;
+  onSetNetworkRoomId: (roomId: string) => void;
+  /** Live AI Network state, for the shared status UI in the Network tab — its networkAvailable/networkSource already account for whether a collab room is joined. */
+  net: UseLlmNetResult;
+  onClose: () => void;
+  initialTab?: SettingsTab;
+};
 
 // Tab order = focus/arrow-navigation order. "display" is the default so the
 // modal opens on the lighter, more commonly touched preferences rather than
 // the dense AI-provider config.
 const TABS: { id: SettingsTab; labelKey: TranslationKey }[] = [
   { id: "display", labelKey: "settings.tab.display" },
-  { id: "ai", labelKey: "settings.tab.ai" },
+  { id: "connection", labelKey: "settings.tab.connection" },
+  { id: "network", labelKey: "settings.tab.network" },
+  { id: "tasks", labelKey: "settings.tab.tasks" },
 ];
 
 // One unified, tabbed Settings surface, opened by the single toolbar gear.
-// Shows exactly one section at a time (Display or AI) to keep the amount of
-// information on screen low. Owns the dialog chrome (overlay, header, focus
-// trap via useModalA11y); the per-tab bodies are chrome-less panels.
-export function SettingsModal(props: LlmSettingsPanelProps & {
-  onClose: () => void;
-  initialTab?: SettingsTab;
-}) {
-  const { onClose, initialTab = "display", ...llmPanelProps } = props;
+// Shows exactly one section at a time (Display / Connection / Network /
+// Tasks) to keep the amount of information on screen low. Owns the dialog
+// chrome (overlay, header, focus trap via useModalA11y); the per-tab bodies
+// are chrome-less panels. The former single "AI" tab (LlmSettingsPanel) was
+// split into these three focused tabs — Connection (providers/presets),
+// Network (AI Network room + consumer/provider roles), and Tasks (use-case
+// -> model assignment).
+export function SettingsModal(props: SettingsModalProps) {
+  const {
+    onClose,
+    initialTab = "display",
+    settings,
+    shared,
+    onAddProvider,
+    onUpdateProvider,
+    onRemoveProvider,
+    onAddPreset,
+    onUpdatePreset,
+    onRemovePreset,
+    onSetDefaultPresetId,
+    onSetEmbeddingModel,
+    onSetReasoningEffort,
+    onSetConnection,
+    onSetProviderModeEnabled,
+    onSetNetworkRoomId,
+    net,
+  } = props;
   const t = useT();
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
-  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({ display: null, ai: null });
+  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({
+    display: null,
+    connection: null,
+    network: null,
+    tasks: null,
+  });
   // Default useModalA11y focus target is the first focusable element, which
   // here is the header's close (X) button — opening the dialog with focus
   // (and a stray Enter) on "close" is surprising. Land on the active tab
@@ -111,7 +164,38 @@ export function SettingsModal(props: LlmSettingsPanelProps & {
           id="settings-panel"
           aria-labelledby={`settings-tab-${activeTab}`}
         >
-          {activeTab === "display" ? <AppSettingsPanel onClose={onClose} /> : <LlmSettingsPanel {...llmPanelProps} />}
+          {activeTab === "display" && <AppSettingsPanel onClose={onClose} />}
+          {activeTab === "connection" && (
+            <LlmConnectionPanel
+              settings={settings}
+              shared={shared}
+              onAddProvider={onAddProvider}
+              onUpdateProvider={onUpdateProvider}
+              onRemoveProvider={onRemoveProvider}
+              onAddPreset={onAddPreset}
+              onUpdatePreset={onUpdatePreset}
+              onRemovePreset={onRemovePreset}
+            />
+          )}
+          {activeTab === "network" && (
+            <LlmNetworkPanel
+              settings={settings}
+              shared={shared}
+              onSetConnection={onSetConnection}
+              onSetProviderModeEnabled={onSetProviderModeEnabled}
+              onSetNetworkRoomId={onSetNetworkRoomId}
+              net={net}
+            />
+          )}
+          {activeTab === "tasks" && (
+            <LlmTasksPanel
+              settings={settings}
+              shared={shared}
+              onSetDefaultPresetId={onSetDefaultPresetId}
+              onSetEmbeddingModel={onSetEmbeddingModel}
+              onSetReasoningEffort={onSetReasoningEffort}
+            />
+          )}
         </div>
       </div>
     </div>

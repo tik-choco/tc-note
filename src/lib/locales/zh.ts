@@ -22,7 +22,9 @@ export const zh: Record<TranslationKey, Entry> = {
 
   "settings.title": "设置",
   "settings.tab.display": "显示",
-  "settings.tab.ai": "AI",
+  "settings.tab.connection": "连接",
+  "settings.tab.network": "AI Network",
+  "settings.tab.tasks": "任务",
 
   "mermaidBlock.clickToEdit": "点击编辑",
   "mermaidBlock.renderError": (params) => `图表渲染失败：${params.error}`,
@@ -128,11 +130,8 @@ export const zh: Record<TranslationKey, Entry> = {
   "sidebar.deleteFolder": "删除文件夹",
   "sidebar.unfiledSection": "未分类",
 
-  "llmSettings.title": "LLM 提供商设置",
-  "llmSettings.close": "关闭",
   "llmSettings.providersLabel": "提供商",
   "llmSettings.addProvider": "添加提供商",
-  "llmSettings.edit": "编辑",
   "llmSettings.delete": "删除",
   "llmSettings.noProviders": "尚未注册提供商",
   "llmSettings.labelPlaceholder": "标签（例如 OpenAI）",
@@ -155,18 +154,15 @@ export const zh: Record<TranslationKey, Entry> = {
   "llmSettings.noProvidersForPreset": "请先添加一个提供商",
   "llmSettings.presetLabelPlaceholder": "标签（例如：快速回复）",
   "llmSettings.presetProviderLabel": "提供商",
+  "llmSettings.presetDefaultBadge": "默认",
   "llmSettings.temperatureLabel": "Temperature（可选）",
   "llmSettings.temperaturePlaceholder": "例如：0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort（可选）",
   "llmSettings.reasoningEffortPlaceholder": "例如：medium",
-  "llmSettings.defaultPresetHint": "请选择要作为默认使用的预设。",
   "llmSettings.unknownProvider": "（未知提供商）",
 
-  "llmSettings.networkSection": "AI Network",
   "llmSettings.networkTransportNote":
     "AI Network 使用已加入的共享房间作为通信通道（这与页面共享功能本身不同）。",
-  "llmSettings.connectionLabel": "连接方式",
-  "llmSettings.connection.api": "直接连接 API",
   "llmSettings.connection.network": "使用 AI Network 提供商",
   "llmSettings.connection.networkHint":
     "加入共享房间以使用 AI Network。房间内的提供商将处理您的请求。",
@@ -182,6 +178,11 @@ export const zh: Record<TranslationKey, Entry> = {
   "llmSettings.providerModeHint":
     "启用后，同一房间内的其他参与者可发送请求，并使用您的 API 密钥进行处理。",
   "llmSettings.providerModeNeedsProvider": "请先配置提供商和 LLM 模型。",
+
+  "llmSettings.tasksHint": "为每个用途设置要使用的模型。",
+  "llmSettings.tasksDefaultModelLabel": "默认模型",
+  "llmSettings.tasksDefaultModelDesc": "用于聊天、审阅等未指定模型的场景。",
+  "llmSettings.tasksEmbeddingModelDesc": "用于笔记内搜索等嵌入计算的模型ID。留空则禁用。",
 
   "llmChat.title": "助手",
   "llmChat.close": "关闭",

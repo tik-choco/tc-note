@@ -30,10 +30,12 @@ const dict = {
   "appSettings.shortcuts.deleteBlocks": { ja: "選択ブロックを削除", en: "Delete selected blocks" },
   "appSettings.shortcuts.deselect": { ja: "選択を解除", en: "Deselect" },
 
-  // Unified settings modal (one gear → tabbed Display / AI sections).
+  // Unified settings modal (one gear → tabbed Display / Connection / Network / Tasks sections).
   "settings.title": { ja: "設定", en: "Settings" },
   "settings.tab.display": { ja: "表示", en: "Display" },
-  "settings.tab.ai": { ja: "AI", en: "AI" },
+  "settings.tab.connection": { ja: "接続", en: "Connection" },
+  "settings.tab.network": { ja: "AI Network", en: "AI Network" },
+  "settings.tab.tasks": { ja: "タスク", en: "Tasks" },
 
   "mermaidBlock.clickToEdit": { ja: "クリックして編集", en: "Click to edit" },
   "mermaidBlock.renderError": {
@@ -194,11 +196,8 @@ const dict = {
   "globalSearch.footerOpen": { ja: "開く", en: "Open" },
   "globalSearch.footerClose": { ja: "閉じる", en: "Close" },
 
-  "llmSettings.title": { ja: "LLM プロバイダー設定", en: "LLM provider settings" },
-  "llmSettings.close": { ja: "閉じる", en: "Close" },
   "llmSettings.providersLabel": { ja: "プロバイダー", en: "Providers" },
   "llmSettings.addProvider": { ja: "プロバイダーを追加", en: "Add provider" },
-  "llmSettings.edit": { ja: "編集", en: "Edit" },
   "llmSettings.delete": { ja: "削除", en: "Delete" },
   "llmSettings.noProviders": { ja: "プロバイダーが登録されていません", en: "No providers registered" },
   "llmSettings.labelPlaceholder": { ja: "ラベル (例: OpenAI)", en: "Label (e.g. OpenAI)" },
@@ -230,23 +229,17 @@ const dict = {
   },
   "llmSettings.presetLabelPlaceholder": { ja: "ラベル (例: 高速応答)", en: "Label (e.g. Fast reply)" },
   "llmSettings.presetProviderLabel": { ja: "プロバイダー", en: "Provider" },
+  "llmSettings.presetDefaultBadge": { ja: "既定", en: "Default" },
   "llmSettings.temperatureLabel": { ja: "Temperature (任意)", en: "Temperature (optional)" },
   "llmSettings.temperaturePlaceholder": { ja: "例: 0.7", en: "e.g. 0.7" },
   "llmSettings.reasoningEffortLabel": { ja: "Reasoning effort (任意)", en: "Reasoning effort (optional)" },
   "llmSettings.reasoningEffortPlaceholder": { ja: "例: medium", en: "e.g. medium" },
-  "llmSettings.defaultPresetHint": {
-    ja: "既定として使うプリセットを選択してください。",
-    en: "Choose which preset to use by default.",
-  },
   "llmSettings.unknownProvider": { ja: "(不明なプロバイダー)", en: "(unknown provider)" },
 
-  "llmSettings.networkSection": { ja: "AI Network", en: "AI Network" },
   "llmSettings.networkTransportNote": {
     ja: "AI Network は、参加中の共有ルームを通信経路として利用します（共有ページの機能とは別のものです）。",
     en: "The AI Network uses the joined collaboration room as its transport (it is separate from page sharing itself).",
   },
-  "llmSettings.connectionLabel": { ja: "接続方法", en: "Connection" },
-  "llmSettings.connection.api": { ja: "APIに直接接続", en: "Direct API" },
   "llmSettings.connection.network": { ja: "AI Network のプロバイダーを利用", en: "Use an AI Network provider" },
   "llmSettings.connection.networkHint": {
     ja: "AI Network を使うには共有ルームに参加してください。ルーム内のプロバイダーがリクエストを処理します。",
@@ -275,6 +268,18 @@ const dict = {
   "llmSettings.providerModeNeedsProvider": {
     ja: "先にプロバイダーとLLMモデルを設定してください。",
     en: "Configure a provider and an LLM model first.",
+  },
+
+  // --- Tasks tab (use-case -> model assignment) ---
+  "llmSettings.tasksHint": { ja: "用途ごとに使用するモデルを設定します。", en: "Assign which model to use for each purpose." },
+  "llmSettings.tasksDefaultModelLabel": { ja: "既定モデル", en: "Default model" },
+  "llmSettings.tasksDefaultModelDesc": {
+    ja: "チャットやレビューなど、特に指定のない場面で使うモデルです。",
+    en: "Used for chat, review, and anywhere else no specific model is set.",
+  },
+  "llmSettings.tasksEmbeddingModelDesc": {
+    ja: "ノート内検索などの埋め込み計算に使うモデルIDです。空欄で無効になります。",
+    en: "Model ID used for embeddings (e.g. note search). Leave blank to disable.",
   },
 
   "llmChat.title": { ja: "アシスタント", en: "Assistant" },

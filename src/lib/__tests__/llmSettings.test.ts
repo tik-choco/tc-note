@@ -7,9 +7,10 @@ import {
   setConnection,
   setEmbeddingModel,
   setProviderModeEnabled,
+  setReasoningEffort,
   type LlmSettings,
 } from "../llmSettings";
-import { LLM_CONFIG_KEY, loadLlmConfig } from "../llmConfig";
+import { LLM_CONFIG_KEY, loadLlmConfig, saveLlmConfig } from "../llmConfig";
 
 const SETTINGS_KEY = "tc-note:llm-settings";
 
@@ -45,16 +46,46 @@ describe("loadLlmSettings / saveLlmSettings", () => {
       embeddingModel: "text-embedding-3-small",
       connection: "network",
       providerModeEnabled: true,
+      reasoningEffort: "medium",
     };
     saveLlmSettings(settings);
     expect(loadLlmSettings()).toEqual(settings);
   });
 
-  it("fills defaults for connection/providerModeEnabled when absent", () => {
+  it("fills defaults for connection/providerModeEnabled/reasoningEffort when absent", () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ embeddingModel: null }));
     const loaded = loadLlmSettings();
     expect(loaded.connection).toBe("api");
     expect(loaded.providerModeEnabled).toBe(false);
+    expect(loaded.reasoningEffort).toBe("none");
+  });
+
+  it("picks up a legacy default-preset reasoningEffort once, without touching the shared preset", () => {
+    saveLlmConfig({
+      v: 1,
+      providers: [{ id: "p1", label: "OpenAI", baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" }],
+      presets: [{ id: "preset1", label: "gpt-4o", providerId: "p1", model: "gpt-4o", reasoningEffort: "high" }],
+      defaultPresetId: "preset1",
+      network: { roomId: "" },
+      updatedAt: new Date(0).toISOString(),
+    });
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ embeddingModel: null, connection: "api", providerModeEnabled: false }));
+
+    const loaded = loadLlmSettings();
+    expect(loaded.reasoningEffort).toBe("high");
+
+    // One-time only: the preset's own field is left untouched, and once the
+    // local record has its own reasoningEffort a second load doesn't
+    // re-derive from a since-changed preset.
+    const shared = loadLlmConfig()!;
+    expect(shared.presets[0].reasoningEffort).toBe("high");
+    shared.presets[0].reasoningEffort = "low";
+    saveLlmConfig(shared);
+    expect(loadLlmSettings().reasoningEffort).toBe("high");
+  });
+
+  it("defaults reasoningEffort to 'none' on a pristine install (no legacy preset to read)", () => {
+    expect(loadLlmSettings().reasoningEffort).toBe("none");
   });
 
   it("falls back to defaults on corrupt JSON", () => {
@@ -87,6 +118,13 @@ describe("setConnection / setProviderModeEnabled / setEmbeddingModel immutabilit
     expect(DEFAULT_LLM_SETTINGS.embeddingModel).toBeNull();
     expect(next.embeddingModel).toBe("text-embedding-3-small");
   });
+
+  it("setReasoningEffort returns a new object without mutating the original", () => {
+    const next = setReasoningEffort(DEFAULT_LLM_SETTINGS, "high");
+    expect(DEFAULT_LLM_SETTINGS.reasoningEffort).toBe("none");
+    expect(next.reasoningEffort).toBe("high");
+    expect(next).not.toBe(DEFAULT_LLM_SETTINGS);
+  });
 });
 
 describe("legacy migration", () => {
@@ -111,6 +149,7 @@ describe("legacy migration", () => {
       embeddingModel: "text-embedding-3-small",
       connection: "network",
       providerModeEnabled: true,
+      reasoningEffort: "none",
     });
     const rawLocal = JSON.parse(localStorage.getItem(SETTINGS_KEY)!);
     expect(rawLocal.providers).toBeUndefined();
@@ -190,7 +229,12 @@ describe("legacy migration", () => {
   });
 
   it("does nothing when there are no legacy fields (new-shape record)", () => {
-    const settings: LlmSettings = { embeddingModel: null, connection: "api", providerModeEnabled: false };
+    const settings: LlmSettings = {
+      embeddingModel: null,
+      connection: "api",
+      providerModeEnabled: false,
+      reasoningEffort: "none",
+    };
     saveLlmSettings(settings);
     loadLlmSettings();
     expect(localStorage.getItem(LLM_CONFIG_KEY)).toBeNull();

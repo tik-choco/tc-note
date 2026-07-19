@@ -73,11 +73,18 @@ describe("listPdfViewerDocuments", () => {
     expect(docs[0]).toEqual({ pdfName: "meeting.pdf", hasSummary: true, languages: ["en", "ko"], updatedAt: 300 });
   });
 
-  it("skips old-format entries that are bare CID strings", async () => {
+  it("resolves oldest-format entries that are bare CID strings via storage_get", async () => {
     localStorage.setItem(OCR_INDEX_KEY, JSON.stringify({ "old.pdf": "bafy123" }));
     localStorage.setItem(TRANSLATED_INDEX_KEY, JSON.stringify({ "old.pdf": { en: "bafy456" } }));
+    storage_get.mockImplementation(async (cid: string) => {
+      const body = cid === "bafy123" ? "OCR本文" : "English body";
+      return new TextEncoder().encode(body);
+    });
 
-    expect(await listPdfViewerDocuments()).toEqual([]);
+    const docs = await listPdfViewerDocuments();
+    expect(docs).toHaveLength(1);
+    expect(docs[0].pdfName).toBe("old.pdf");
+    expect(docs[0].languages).toEqual(["en"]);
   });
 
   it("returns an empty list when localStorage JSON is malformed", async () => {
@@ -162,11 +169,28 @@ describe("importPdfViewerDocument", () => {
     expect(result.notes.every((n) => n.folderId === "folder-1")).toBe(true);
   });
 
-  it("skips old-format bare-CID entries and returns an error when nothing importable is found", async () => {
+  it("resolves oldest-format bare-CID entries via storage_get and imports them", async () => {
     localStorage.setItem(OCR_INDEX_KEY, JSON.stringify({ "old.pdf": "bafy123" }));
     localStorage.setItem(TRANSLATED_INDEX_KEY, JSON.stringify({ "old.pdf": { en: "bafy456" } }));
+    storage_get.mockImplementation(async (cid: string) => {
+      const body = cid === "bafy123" ? "OCR本文" : "English body";
+      return new TextEncoder().encode(body);
+    });
 
     const result = await importPdfViewerDocument("old.pdf", null);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.notes).toHaveLength(2);
+    expect(saveNote).toHaveBeenCalledWith(expect.any(String), "old.pdf", "OCR本文");
+    expect(saveNote).toHaveBeenCalledWith(expect.any(String), "old.pdf (en)", "English body");
+  });
+
+  it("returns noContent when a bare-CID entry's storage_get resolution fails", async () => {
+    localStorage.setItem(OCR_INDEX_KEY, JSON.stringify({ "broken.pdf": "bafy999" }));
+    storage_get.mockRejectedValue(new Error("not found"));
+
+    const result = await importPdfViewerDocument("broken.pdf", null);
 
     expect(result.ok).toBe(false);
     if (result.ok) return;

@@ -1,0 +1,339 @@
+/* ============================================================
+   LlmConnectionPanel — "Connection" tab: flat provider/preset
+   grid cards.
+   ------------------------------------------------------------
+   Visually ported from tc-translate's SettingsModal connection
+   tab (src/styles/settings-llm.css: server-list-header /
+   model-row / connection-form-* / grid-add-tile), token-mapped
+   to tc-note's palette (--primary -> --accent, --primary-hover
+   -> --accent-hover, --primary-soft -> --accent-bg, --on-primary
+   -> --on-accent, --radius-s -> --radius-sm, --danger-soft ->
+   --danger-bg) — no new colors introduced, all spacing/radius
+   values come from tc-note's src/index.css tokens.
+   Consumed by components/LlmConnectionPanel.tsx.
+   ============================================================ */
+
+.llm-connection-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.llm-connection-section:last-child {
+  margin-bottom: 0;
+}
+
+.llm-connection-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+.llm-connection-hint {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: 12px;
+}
+
+.llm-connection-error {
+  color: var(--danger);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Providers and presets are two independent grids of cards; a card being
+   edited/added expands in place to the grid's full width rather than
+   opening a separate dialog. */
+.llm-connection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Programmatic-only focus target (see providerGridRef/presetGridRef in
+   LlmConnectionPanel.tsx) — never reached via Tab, so no visible ring is
+   needed here beyond the shared :focus-visible rule in index.css, which
+   only fires for keyboard focus anyway. */
+.llm-connection-grid:focus {
+  outline: none;
+}
+
+.llm-connection-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6) var(--space-3) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  transition: background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.llm-connection-card:hover {
+  background: var(--surface-2);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+}
+
+.llm-connection-card-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.llm-connection-card-label {
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.llm-connection-card-sub {
+  max-width: 100%;
+  color: var(--text-subtle);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Preset cards add a third line naming their provider — smaller and
+   italicized so it reads as metadata rather than a second value. */
+.llm-connection-card-provider {
+  max-width: 100%;
+  color: var(--text-subtle);
+  font-size: 11px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badges (currently just "default") shown under a preset card's metadata
+   lines — see llm-settings-common-v1.md §3.1's "badge display: default /
+   per-task assignment / network-origin / shared" card concept. tc-note only
+   has the "default" badge today: it has no vision/network-mirrored-preset/
+   shared-model-list concepts (see LlmNetworkPanel.tsx and
+   llm-settings-common-v1.md's tc-note worker notes on why those don't apply
+   here), so the other three tc-translate badge kinds are simply absent
+   rather than stubbed out. */
+.llm-connection-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: 2px;
+}
+
+.task-badge {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 650;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* Round "x" delete chip, top-right of the card. */
+.llm-connection-card-remove {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--text-subtle);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.llm-connection-card-remove:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* An editing/adding card expands to the grid's full width in place —
+   other cards stay put in the grid around it. */
+.llm-connection-card-editing {
+  grid-column: 1 / -1;
+  align-items: stretch;
+  gap: var(--space-3);
+  background: var(--surface-2);
+  padding: var(--space-4);
+  box-shadow: none;
+  transform: none;
+}
+
+.llm-connection-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.llm-connection-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.llm-connection-form-fields input:not([type="checkbox"]),
+.llm-connection-form-row input:not([type="checkbox"]),
+.llm-connection-form-row select {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-h);
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.llm-connection-form-row select {
+  cursor: pointer;
+}
+
+.llm-connection-form-fields input::placeholder,
+.llm-connection-form-row input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.llm-connection-form-fields input:not([type="checkbox"]):hover:not(:focus-visible),
+.llm-connection-form-row input:not([type="checkbox"]):hover:not(:focus-visible),
+.llm-connection-form-row select:hover {
+  background: var(--surface-hover);
+}
+
+.llm-connection-form-fields input:not([type="checkbox"]):focus-visible,
+.llm-connection-form-row input:not([type="checkbox"]):focus-visible,
+.llm-connection-form-row select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.llm-connection-form-fields input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.llm-connection-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Buttons inside a card: the "fetch models" action and the Save/Cancel
+   pair. Same pill language as the rest of the settings UI (llm-settings.css)
+   — a soft accent pill for the primary action, a quiet neutral pill for
+   everything else. */
+.llm-connection-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.llm-connection-btn:not(:disabled):hover {
+  background: var(--surface-hover);
+}
+
+.llm-connection-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.llm-connection-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.llm-connection-btn-primary {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.llm-connection-btn-primary:not(:disabled):hover {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-1);
+}
+
+.llm-connection-btn-primary:disabled {
+  color: var(--text-subtle);
+  background: var(--surface-3);
+  border-color: transparent;
+}
+
+/* Grid-trailing "+" tile — dashed border, fills the last grid cell when not
+   in add mode. Deliberately subtle (matches this app's low-affordance
+   preference for "add" controls) rather than a filled/primary button. */
+.llm-connection-add-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 64px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-subtle);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+.llm-connection-add-tile:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.llm-connection-add-tile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

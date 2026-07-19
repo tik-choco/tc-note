@@ -1,0 +1,134 @@
+/* "Tasks" tab body (LlmTasksPanel.tsx) — use-case -> model assignment.
+   Visually a single card (same surface/border/radius-lg/shadow-1 card
+   language as the rest of the settings UI), with rows in tc-translate's
+   `.task-model-item` shape (llm-settings-common-v1.md §3.2): a short label
+   plus a hover tooltip (`data-tip` attribute + CSS `attr(data-tip)`
+   pop-over) instead of an always-visible description column, so the tab
+   doesn't stack multiple permanent hint paragraphs. Token-mapped from
+   tc-translate's settings-llm.css (--primary -> --accent, --surface-3 ->
+   --surface-2, --radius-s -> --radius-md) to tc-note's palette. */
+
+.llm-tasks-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+/* One task row: label + tooltip on the left, stacked select/input controls
+   on the right. */
+.task-model-item {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.task-model-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+@media (max-width: 480px) {
+  .task-model-item {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}
+
+.task-model-item > span {
+  min-width: 0;
+  padding-top: var(--space-2);
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+/* Hover tooltip: the row label's `data-tip` attribute holds the one-sentence
+   explanation that used to be a permanent description column. */
+.task-model-item > span[data-tip] {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.task-model-item > span[data-tip]:hover::after,
+.task-model-item > span[data-tip]:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  z-index: 10;
+  width: max-content;
+  max-width: 240px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-h);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-2);
+}
+
+.task-model-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-model-field {
+  display: block;
+  min-width: 0;
+}
+
+.task-model-field input,
+.task-model-field select {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.task-model-field select {
+  cursor: pointer;
+}
+
+.task-model-field input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.task-model-field input:hover:not(:focus-visible),
+.task-model-field select:hover {
+  background: var(--surface-hover);
+}
+
+.task-model-field input:focus-visible,
+.task-model-field select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.llm-tasks-empty {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  color: var(--text-subtle);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
