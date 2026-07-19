@@ -74,10 +74,7 @@ export function AppSettingsPanel({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Reuses llm-settings-section/llm-settings-hint rather than inventing
-          new CSS — the card chrome is pixel-identical to app-settings-section,
-          and it's the only existing selector that pill-styles a bare button. */}
-      <div class="llm-settings-section">
+      <div class="app-settings-section">
         <span class="app-settings-label">{t("settingsOnboarding.label")}</span>
         <p class="llm-settings-hint">{t("settingsOnboarding.description")}</p>
         <button type="button" onClick={handleReopenOnboarding}>

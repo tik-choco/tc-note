@@ -1,0 +1,137 @@
+/* "Network" tab body (LlmNetworkPanel) — the AI Network room id field plus
+   the Consumer/Provider role cards, styled in tc-note's existing llm-
+   settings-* design language. `.llm-settings-hint` still lives globally in
+   styles/llm-chat.css (loaded via app.css) and is reused as-is; `.llm-
+   settings-row`/`.llm-settings-error` used to live in the now-deleted
+   styles/llm-settings.css (that file was LlmSettingsPanel-only), so their
+   rules are reproduced below to keep this panel self-contained. Only the
+   panel-specific pieces below are new, all under an llm-network- prefix.
+
+   The --mistai-* variable mapping (@tik-choco/mistai/ui.css → tc-note theme
+   tokens) already lives in src/index.css (--mistai-border/-surface/-text/
+   -text-muted/-text-strong), since that library stylesheet is imported once
+   globally in src/main.tsx. It is intentionally NOT repeated here — a
+   second :root block would just be a second, driftable source of truth for
+   the same five variables. */
+
+.llm-network-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* --- Reproduced from the deleted llm-settings.css --- */
+.llm-settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.llm-settings-row input:not([type="checkbox"]),
+.llm-settings-row select {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-h);
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.llm-settings-row select {
+  cursor: pointer;
+}
+
+.llm-settings-row input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.llm-settings-row input:not([type="checkbox"]):hover:not(:focus-visible),
+.llm-settings-row select:hover {
+  background: var(--surface-hover);
+}
+
+.llm-settings-row input:not([type="checkbox"]):focus-visible,
+.llm-settings-row select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.llm-settings-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+/* --- End reproduced rules --- */
+
+.llm-network-role-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Each role is its own sub-card — same surface-2/border/radius-lg/shadow-1
+   language as .llm-provider-item in llm-settings.css. */
+.llm-network-role-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.llm-network-role-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.llm-network-role-head input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.llm-network-role-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-h);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.llm-network-role-title .icon {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+/* Shown only while the role's checkbox is on — the shared mistai status UI
+   plus the role's explanatory copy. */
+.llm-network-role-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.llm-network-role-desc {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: 12px;
+  line-height: 1.4;
+}

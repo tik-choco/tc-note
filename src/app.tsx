@@ -823,6 +823,7 @@ export function App() {
           onRemovePreset={llmSettings.removePreset}
           onSetDefaultPresetId={llmSettings.setDefaultPresetId}
           onSetEmbeddingModel={llmSettings.setEmbeddingModel}
+          onSetReasoningEffort={llmSettings.setReasoningEffort}
           onSetConnection={llmSettings.setConnection}
           onSetProviderModeEnabled={llmSettings.setProviderModeEnabled}
           onSetNetworkRoomId={llmSettings.setNetworkRoomId}

@@ -20,6 +20,21 @@ const SETTINGS_KEY = "tc-note:llm-settings";
  */
 export type LlmConnection = "api" | "network";
 
+// reasoning_effort value for the (only) "default" task — chat + review both
+// resolve through the same shared default preset (see App.tsx), so there is
+// no per-task fan-out the way tc-translate has default/vision. 'none' is a
+// real API value (explicitly disables reasoning on servers that support it),
+// not "omit the field" — requests always include reasoning_effort, 'none'
+// included (see llm-settings-common-v1.md §3.2/§4.1).
+export type ReasoningEffort = "none" | "minimal" | "low" | "medium" | "high";
+export const REASONING_EFFORT_OPTIONS: ReasoningEffort[] = ["none", "minimal", "low", "medium", "high"];
+
+function parseReasoningEffort(value: unknown): ReasoningEffort | null {
+  return typeof value === "string" && (REASONING_EFFORT_OPTIONS as string[]).includes(value)
+    ? (value as ReasoningEffort)
+    : null;
+}
+
 export interface LlmSettings {
   /** text-embedding model id. Persisted but not wired into any call site yet. */
   embeddingModel: string | null;
@@ -28,12 +43,18 @@ export interface LlmSettings {
   /** When true (and a preset resolves), serve llm_request traffic from room
    * peers by forwarding to the resolved preset's endpoint. */
   providerModeEnabled: boolean;
+  /** reasoning_effort for the default task, always sent with the request
+   * (see useLlmSettings.ts's `resolved`, which overrides the resolved
+   * preset's own — now unused for this purpose — `reasoningEffort` field
+   * with this app-local value). */
+  reasoningEffort: ReasoningEffort;
 }
 
 export const DEFAULT_LLM_SETTINGS: LlmSettings = {
   embeddingModel: null,
   connection: "api",
   providerModeEnabled: false,
+  reasoningEffort: "none",
 };
 
 // --- one-time migration from the pre-shared-config local shape -----------
@@ -121,15 +142,33 @@ export function loadLlmSettings(): LlmSettings {
     const legacy = hasLegacyKeys(record);
     if (legacy) migrateLegacyRecord(record);
 
+    // reasoningEffort used to live only on the shared config's ModelPresetV1
+    // (edited from the old AI Connection preset form) rather than as an
+    // app-local per-task value. If this record predates that field, pick up
+    // the current default preset's legacy value once so behavior doesn't
+    // silently change for existing users — but don't touch the shared preset
+    // itself (that field is a cross-app, co-owned record; leaving it in
+    // place is harmless now that nothing reads it for the actual request).
+    // A pristine install (no `reasoningEffort` key AND no shared config to
+    // read from) just gets the plain default, which is not a "migration".
+    const hasStoredReasoningEffort = typeof record.reasoningEffort === "string";
+    let reasoningEffort = parseReasoningEffort(record.reasoningEffort) ?? "none";
+    if (!hasStoredReasoningEffort) {
+      const sharedForMigration = loadLlmConfig();
+      const defaultPreset = sharedForMigration?.presets.find((p) => p.id === sharedForMigration.defaultPresetId);
+      reasoningEffort = parseReasoningEffort(defaultPreset?.reasoningEffort) ?? reasoningEffort;
+    }
+
     const settings: LlmSettings = {
       embeddingModel: typeof record.embeddingModel === "string" ? record.embeddingModel : null,
       connection: record.connection === "network" ? "network" : "api",
       providerModeEnabled: record.providerModeEnabled === true,
+      reasoningEffort,
     };
 
     // Drop the legacy fields (if any) from what's persisted, so this record
     // is in the new shape from now on and migration doesn't re-run.
-    if (legacy) saveLlmSettings(settings);
+    if (legacy || !hasStoredReasoningEffort) saveLlmSettings(settings);
 
     return settings;
   } catch {
@@ -151,6 +190,10 @@ export function setProviderModeEnabled(settings: LlmSettings, providerModeEnable
 
 export function setEmbeddingModel(settings: LlmSettings, embeddingModel: string | null): LlmSettings {
   return { ...settings, embeddingModel };
+}
+
+export function setReasoningEffort(settings: LlmSettings, reasoningEffort: ReasoningEffort): LlmSettings {
+  return { ...settings, reasoningEffort };
 }
 
 /**

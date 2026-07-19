@@ -32,3 +32,4 @@ dist-ssr
 
 # Claude Code local state (worktrees, local settings)
 .claude/
+CLAUDE.md

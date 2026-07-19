@@ -120,3 +120,35 @@
   text-align: center;
   white-space: nowrap;
 }
+
+/* Bare <button> inside a section card (currently just the "reopen onboarding"
+   button) — tc-town's pill button language, matching the primary/accent pill
+   previously provided by llm-settings.css's `.llm-settings-section > button`
+   rule before AppSettingsPanel stopped depending on that stylesheet. */
+.app-settings-section > button {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.app-settings-section > button:hover {
+  background: var(--accent-bg-strong);
+  box-shadow: var(--shadow-1);
+}
+
+.app-settings-section > button:active {
+  transform: scale(0.97);
+}

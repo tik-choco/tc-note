@@ -71,11 +71,13 @@ function readJsonRecord(key: string): Record<string, unknown> {
 function parseOcrIndexRecord(raw: Record<string, unknown>): Record<string, OcrEntry> {
   const index: Record<string, OcrEntry> = {};
   for (const [pdfName, value] of Object.entries(raw)) {
-    // Old format stored a bare CID string; those entries have no local
-    // content to import, so they're skipped rather than resolved.
-    if (typeof value === "string") continue;
-    if (value === null || typeof value !== "object") continue;
-    index[pdfName] = value as OcrEntry;
+    // Oldest format stored a bare CID string. It's still a CID, so normalize
+    // it to { cid } and let it flow through the same cid dual-read path
+    // (resolveEntryContent below) as the current { cid, updatedAt, summary? }
+    // format, rather than skipping it.
+    const entry = typeof value === "string" ? { cid: value } : value;
+    if (entry === null || typeof entry !== "object") continue;
+    index[pdfName] = entry as OcrEntry;
   }
   return index;
 }
@@ -143,17 +145,19 @@ async function readTranslatedIndex(): Promise<Record<string, Record<string, Tran
     if (langs === null || typeof langs !== "object") continue;
     const entries: Record<string, TranslationEntry> = {};
     for (const [lang, value] of Object.entries(langs as Record<string, unknown>)) {
-      // Old format stored a bare CID string per language; skip those (no
-      // separate content/cid fields to dual-read from).
-      if (typeof value === "string") continue;
-      if (value === null || typeof value !== "object") continue;
-      const entry = value as Partial<TranslationEntry>;
+      // Oldest format stored a bare CID string per language. It's still a
+      // CID, so normalize it to { cid } and let it flow through the same
+      // dual-read path below as the current { cid, updatedAt } format,
+      // rather than skipping it.
+      const entry = typeof value === "string" ? { cid: value } : value;
+      if (entry === null || typeof entry !== "object") continue;
+      const parsed = entry as Partial<TranslationEntry>;
       const content = await resolveEntryContent(
-        typeof entry.content === "string" ? entry.content : undefined,
-        typeof entry.cid === "string" ? entry.cid : undefined,
+        typeof parsed.content === "string" ? parsed.content : undefined,
+        typeof parsed.cid === "string" ? parsed.cid : undefined,
       );
       if (content === undefined) continue;
-      entries[lang] = { content, updatedAt: entry.updatedAt ?? 0 };
+      entries[lang] = { content, updatedAt: parsed.updatedAt ?? 0 };
     }
     if (Object.keys(entries).length > 0) index[pdfName] = entries;
   }

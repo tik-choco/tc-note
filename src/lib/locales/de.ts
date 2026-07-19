@@ -22,7 +22,9 @@ export const de: Record<TranslationKey, Entry> = {
 
   "settings.title": "Einstellungen",
   "settings.tab.display": "Anzeige",
-  "settings.tab.ai": "AI",
+  "settings.tab.connection": "Verbindung",
+  "settings.tab.network": "AI Network",
+  "settings.tab.tasks": "Aufgaben",
 
   "mermaidBlock.clickToEdit": "Zum Bearbeiten klicken",
   "mermaidBlock.renderError": (params) => `Diagramm konnte nicht gerendert werden: ${params.error}`,
@@ -130,11 +132,8 @@ export const de: Record<TranslationKey, Entry> = {
   "sidebar.deleteFolder": "Ordner löschen",
   "sidebar.unfiledSection": "Nicht zugeordnet",
 
-  "llmSettings.title": "LLM-Anbietereinstellungen",
-  "llmSettings.close": "Schließen",
   "llmSettings.providersLabel": "Anbieter",
   "llmSettings.addProvider": "Anbieter hinzufügen",
-  "llmSettings.edit": "Bearbeiten",
   "llmSettings.delete": "Löschen",
   "llmSettings.noProviders": "Keine Anbieter registriert",
   "llmSettings.labelPlaceholder": "Bezeichnung (z. B. OpenAI)",
@@ -157,18 +156,15 @@ export const de: Record<TranslationKey, Entry> = {
   "llmSettings.noProvidersForPreset": "Fügen Sie zuerst einen Anbieter hinzu",
   "llmSettings.presetLabelPlaceholder": "Bezeichnung (z. B. Schnelle Antwort)",
   "llmSettings.presetProviderLabel": "Anbieter",
+  "llmSettings.presetDefaultBadge": "Standard",
   "llmSettings.temperatureLabel": "Temperature (optional)",
   "llmSettings.temperaturePlaceholder": "z. B. 0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort (optional)",
   "llmSettings.reasoningEffortPlaceholder": "z. B. medium",
-  "llmSettings.defaultPresetHint": "Wählen Sie, welches Preset standardmäßig verwendet werden soll.",
   "llmSettings.unknownProvider": "(unbekannter Anbieter)",
 
-  "llmSettings.networkSection": "AI Network",
   "llmSettings.networkTransportNote":
     "Das AI Network nutzt den beigetretenen Kollaborationsraum als Übertragungsweg (dies ist von der Seitenfreigabe selbst getrennt).",
-  "llmSettings.connectionLabel": "Verbindung",
-  "llmSettings.connection.api": "Direkte API",
   "llmSettings.connection.network": "Einen AI-Network-Anbieter verwenden",
   "llmSettings.connection.networkHint":
     "Treten Sie einem Kollaborationsraum bei, um das AI Network zu nutzen. Ein Anbieter im Raum verarbeitet Ihre Anfragen.",
@@ -184,6 +180,13 @@ export const de: Record<TranslationKey, Entry> = {
   "llmSettings.providerModeHint":
     "Wenn aktiviert, können andere Teilnehmer im selben Raum Anfragen senden, die mit Ihrem API-Schlüssel verarbeitet werden.",
   "llmSettings.providerModeNeedsProvider": "Konfigurieren Sie zuerst einen Anbieter und ein LLM-Modell.",
+
+  "llmSettings.tasksHint": "Legen Sie fest, welches Modell für welchen Zweck verwendet wird.",
+  "llmSettings.tasksDefaultModelLabel": "Standardmodell",
+  "llmSettings.tasksDefaultModelDesc":
+    "Wird für Chat, Überprüfung und überall dort verwendet, wo kein bestimmtes Modell festgelegt ist.",
+  "llmSettings.tasksEmbeddingModelDesc":
+    "Modell-ID für Embeddings (z. B. Notizsuche). Leer lassen, um zu deaktivieren.",
 
   "llmChat.title": "Assistent",
   "llmChat.close": "Schließen",

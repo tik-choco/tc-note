@@ -22,7 +22,9 @@ export const ko: Record<TranslationKey, Entry> = {
 
   "settings.title": "설정",
   "settings.tab.display": "화면",
-  "settings.tab.ai": "AI",
+  "settings.tab.connection": "연결",
+  "settings.tab.network": "AI Network",
+  "settings.tab.tasks": "작업",
 
   "mermaidBlock.clickToEdit": "클릭하여 편집",
   "mermaidBlock.renderError": (params) => `다이어그램 렌더링 실패: ${params.error}`,
@@ -128,11 +130,8 @@ export const ko: Record<TranslationKey, Entry> = {
   "sidebar.deleteFolder": "폴더 삭제",
   "sidebar.unfiledSection": "미분류",
 
-  "llmSettings.title": "LLM 제공자 설정",
-  "llmSettings.close": "닫기",
   "llmSettings.providersLabel": "제공자",
   "llmSettings.addProvider": "제공자 추가",
-  "llmSettings.edit": "편집",
   "llmSettings.delete": "삭제",
   "llmSettings.noProviders": "등록된 제공자가 없습니다",
   "llmSettings.labelPlaceholder": "라벨 (예: OpenAI)",
@@ -155,18 +154,15 @@ export const ko: Record<TranslationKey, Entry> = {
   "llmSettings.noProvidersForPreset": "먼저 프로바이더를 추가하세요",
   "llmSettings.presetLabelPlaceholder": "라벨 (예: 빠른 응답)",
   "llmSettings.presetProviderLabel": "프로바이더",
+  "llmSettings.presetDefaultBadge": "기본",
   "llmSettings.temperatureLabel": "Temperature (선택사항)",
   "llmSettings.temperaturePlaceholder": "예: 0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort (선택사항)",
   "llmSettings.reasoningEffortPlaceholder": "예: medium",
-  "llmSettings.defaultPresetHint": "기본으로 사용할 프리셋을 선택하세요.",
   "llmSettings.unknownProvider": "(알 수 없는 프로바이더)",
 
-  "llmSettings.networkSection": "AI Network",
   "llmSettings.networkTransportNote":
     "AI Network는 참여 중인 공유 방을 통신 경로로 사용합니다 (페이지 공유 기능과는 별개입니다).",
-  "llmSettings.connectionLabel": "연결 방법",
-  "llmSettings.connection.api": "API에 직접 연결",
   "llmSettings.connection.network": "AI Network 제공자 사용",
   "llmSettings.connection.networkHint":
     "AI Network를 사용하려면 공유 방에 참여하세요. 방 안의 제공자가 요청을 처리합니다.",
@@ -182,6 +178,11 @@ export const ko: Record<TranslationKey, Entry> = {
   "llmSettings.providerModeHint":
     "활성화하면 같은 방의 다른 참가자가 보낸 요청을 내 API 키로 처리합니다.",
   "llmSettings.providerModeNeedsProvider": "먼저 제공자와 LLM 모델을 설정하세요.",
+
+  "llmSettings.tasksHint": "용도별로 사용할 모델을 설정합니다.",
+  "llmSettings.tasksDefaultModelLabel": "기본 모델",
+  "llmSettings.tasksDefaultModelDesc": "채팅, 검토 등 특별히 지정되지 않은 경우에 사용되는 모델입니다.",
+  "llmSettings.tasksEmbeddingModelDesc": "노트 검색 등 임베딩 계산에 사용하는 모델 ID입니다. 비워두면 비활성화됩니다.",
 
   "llmChat.title": "어시스턴트",
   "llmChat.close": "닫기",
