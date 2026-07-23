@@ -2,6 +2,7 @@ import { useRef, useState } from "preact/hooks";
 import { formatMistaiError, MESSAGES_EN, MESSAGES_JA } from "@tik-choco/mistai";
 import { fetchModels, type LlmSettings } from "../lib/llmSettings";
 import type { LlmProviderV1, ModelPresetV1, SharedLlmConfigV1 } from "../lib/llmConfig";
+import { isNetworkProviderBaseUrl } from "../lib/networkModels";
 import { useAppSettings, useT } from "../hooks/useAppSettings";
 import { pickFocusAfterUnmount } from "../lib/util";
 import { Icon } from "./Icon";
@@ -206,6 +207,17 @@ export function LlmConnectionPanel(props: LlmConnectionPanelProps) {
     return provider ? provider.label : t("llmSettings.unknownProvider");
   }
 
+  // True when `providerId` resolves to the `mist-network://` pseudo-provider
+  // convention (lib/networkModels.ts) — i.e. this provider/preset was synced
+  // into the shared config by another tik-choco app's AI Network room, not
+  // configured here directly. tc-note has no sync of its own (see
+  // networkModels.ts's header) but still needs to render entries other apps
+  // wrote into the co-owned shared config.
+  function isNetworkPresetProvider(providerId: string): boolean {
+    const provider = shared.providers.find((p) => p.id === providerId);
+    return provider ? isNetworkProviderBaseUrl(provider.baseUrl) : false;
+  }
+
   // presetModels is only ever populated by an explicit "fetch model list"
   // click (unlike tc-translate, which auto-fetches on open) — mirrors
   // LlmSettingsPanel's getModelSelectionState/fetchModels flow exactly, just
@@ -367,8 +379,16 @@ export function LlmConnectionPanel(props: LlmConnectionPanelProps) {
               );
             }
 
+            const isNetworkProvider = isNetworkProviderBaseUrl(provider.baseUrl);
+            // The raw `mist-network://<room>` host is meaningless to a user —
+            // show a translated note instead, same idea as tc-translate's
+            // SettingsModal.tsx renderProviderRow.
+            const providerSecondLine = isNetworkProvider ? t("llmSettings.connectionNetworkNote") : provider.baseUrl;
             return (
-              <div class="llm-connection-card" key={provider.id}>
+              <div
+                class={`llm-connection-card${isNetworkProvider ? " llm-connection-card-network" : ""}`}
+                key={provider.id}
+              >
                 <button
                   type="button"
                   class="llm-connection-card-main"
@@ -378,7 +398,7 @@ export function LlmConnectionPanel(props: LlmConnectionPanelProps) {
                   onClick={() => startEditProvider(provider)}
                 >
                   <span class="llm-connection-card-label">{provider.label}</span>
-                  <span class="llm-connection-card-sub">{provider.baseUrl}</span>
+                  <span class="llm-connection-card-sub">{providerSecondLine}</span>
                 </button>
                 <span
                   class="llm-connection-card-remove"
@@ -461,8 +481,13 @@ export function LlmConnectionPanel(props: LlmConnectionPanelProps) {
               );
             }
 
+            const isNetworkPreset = isNetworkPresetProvider(preset.providerId);
+            const hasBadges = shared.defaultPresetId === preset.id || isNetworkPreset;
             return (
-              <div class="llm-connection-card" key={preset.id}>
+              <div
+                class={`llm-connection-card${isNetworkPreset ? " llm-connection-card-network" : ""}`}
+                key={preset.id}
+              >
                 <button
                   type="button"
                   class="llm-connection-card-main"
@@ -474,9 +499,14 @@ export function LlmConnectionPanel(props: LlmConnectionPanelProps) {
                   <span class="llm-connection-card-label">{preset.label}</span>
                   <span class="llm-connection-card-sub">{preset.model}</span>
                   <span class="llm-connection-card-provider">{providerLabel(preset.providerId)}</span>
-                  {shared.defaultPresetId === preset.id && (
+                  {hasBadges && (
                     <span class="llm-connection-card-badges">
-                      <span class="task-badge">{t("llmSettings.presetDefaultBadge")}</span>
+                      {shared.defaultPresetId === preset.id && (
+                        <span class="task-badge">{t("llmSettings.presetDefaultBadge")}</span>
+                      )}
+                      {isNetworkPreset && (
+                        <span class="task-badge task-badge-network">{t("llmSettings.presetNetworkBadge")}</span>
+                      )}
                     </span>
                   )}
                 </button>

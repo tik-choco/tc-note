@@ -158,6 +158,8 @@ export const es: Record<TranslationKey, Entry> = {
   "llmSettings.presetLabelPlaceholder": "Etiqueta (p. ej.: Respuesta rápida)",
   "llmSettings.presetProviderLabel": "Proveedor",
   "llmSettings.presetDefaultBadge": "Predeterminado",
+  "llmSettings.presetNetworkBadge": "Network",
+  "llmSettings.connectionNetworkNote": "Sala de LLM Network",
   "llmSettings.temperatureLabel": "Temperature (opcional)",
   "llmSettings.temperaturePlaceholder": "p. ej.: 0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort (opcional)",

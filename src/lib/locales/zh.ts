@@ -155,6 +155,8 @@ export const zh: Record<TranslationKey, Entry> = {
   "llmSettings.presetLabelPlaceholder": "标签（例如：快速回复）",
   "llmSettings.presetProviderLabel": "提供商",
   "llmSettings.presetDefaultBadge": "默认",
+  "llmSettings.presetNetworkBadge": "Network",
+  "llmSettings.connectionNetworkNote": "LLM Network 房间",
   "llmSettings.temperatureLabel": "Temperature（可选）",
   "llmSettings.temperaturePlaceholder": "例如：0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort（可选）",

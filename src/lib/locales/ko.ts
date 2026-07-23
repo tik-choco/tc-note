@@ -155,6 +155,8 @@ export const ko: Record<TranslationKey, Entry> = {
   "llmSettings.presetLabelPlaceholder": "라벨 (예: 빠른 응답)",
   "llmSettings.presetProviderLabel": "프로바이더",
   "llmSettings.presetDefaultBadge": "기본",
+  "llmSettings.presetNetworkBadge": "Network",
+  "llmSettings.connectionNetworkNote": "LLM Network 룸",
   "llmSettings.temperatureLabel": "Temperature (선택사항)",
   "llmSettings.temperaturePlaceholder": "예: 0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort (선택사항)",

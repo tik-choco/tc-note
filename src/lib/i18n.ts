@@ -230,6 +230,8 @@ const dict = {
   "llmSettings.presetLabelPlaceholder": { ja: "ラベル (例: 高速応答)", en: "Label (e.g. Fast reply)" },
   "llmSettings.presetProviderLabel": { ja: "プロバイダー", en: "Provider" },
   "llmSettings.presetDefaultBadge": { ja: "既定", en: "Default" },
+  "llmSettings.presetNetworkBadge": { ja: "Network", en: "Network" },
+  "llmSettings.connectionNetworkNote": { ja: "LLM Network ルーム", en: "LLM Network room" },
   "llmSettings.temperatureLabel": { ja: "Temperature (任意)", en: "Temperature (optional)" },
   "llmSettings.temperaturePlaceholder": { ja: "例: 0.7", en: "e.g. 0.7" },
   "llmSettings.reasoningEffortLabel": { ja: "Reasoning effort (任意)", en: "Reasoning effort (optional)" },
