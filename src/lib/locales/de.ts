@@ -157,6 +157,8 @@ export const de: Record<TranslationKey, Entry> = {
   "llmSettings.presetLabelPlaceholder": "Bezeichnung (z. B. Schnelle Antwort)",
   "llmSettings.presetProviderLabel": "Anbieter",
   "llmSettings.presetDefaultBadge": "Standard",
+  "llmSettings.presetNetworkBadge": "Network",
+  "llmSettings.connectionNetworkNote": "LLM-Network-Raum",
   "llmSettings.temperatureLabel": "Temperature (optional)",
   "llmSettings.temperaturePlaceholder": "z. B. 0.7",
   "llmSettings.reasoningEffortLabel": "Reasoning effort (optional)",

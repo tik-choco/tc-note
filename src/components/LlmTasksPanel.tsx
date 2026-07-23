@@ -1,5 +1,6 @@
 import { REASONING_EFFORT_OPTIONS, type LlmSettings, type ReasoningEffort } from "../lib/llmSettings";
 import type { SharedLlmConfigV1 } from "../lib/llmConfig";
+import { isNetworkProviderBaseUrl } from "../lib/networkModels";
 import { useT } from "../hooks/useAppSettings";
 
 export type LlmTasksPanelProps = {
@@ -11,6 +12,12 @@ export type LlmTasksPanelProps = {
   onSetDefaultPresetId: (id: string) => void;
   onSetEmbeddingModel: (model: string | null) => void;
   onSetReasoningEffort: (effort: ReasoningEffort) => void;
+  /** Whether the AI Network transport can actually run right now
+   * (useLlmNet's `networkAvailable`) — gates whether a `mist-network://`-backed
+   * preset (synced in from another tik-choco app's AI Network room; see
+   * lib/networkModels.ts) is offered as selectable here, same idea as
+   * tc-translate's SettingsModal.tsx `networkConnected` guard. */
+  networkConnected: boolean;
 };
 
 // "Tasks" tab body: use-case -> model assignment, tc-translate's row layout
@@ -26,8 +33,19 @@ export type LlmTasksPanelProps = {
 // voice feature (TranslateHoverLayer's "listen" button is the browser's own
 // Web Speech API `speechSynthesis`, unrelated to any configured provider).
 export function LlmTasksPanel(props: LlmTasksPanelProps) {
-  const { settings, shared, onSetDefaultPresetId, onSetEmbeddingModel, onSetReasoningEffort } = props;
+  const { settings, shared, onSetDefaultPresetId, onSetEmbeddingModel, onSetReasoningEffort, networkConnected } =
+    props;
   const t = useT();
+
+  function isNetworkPresetProvider(providerId: string): boolean {
+    const provider = shared.providers.find((p) => p.id === providerId);
+    return provider ? isNetworkProviderBaseUrl(provider.baseUrl) : false;
+  }
+
+  function isNetworkPreset(presetId: string): boolean {
+    const preset = shared.presets.find((p) => p.id === presetId);
+    return preset ? isNetworkPresetProvider(preset.providerId) : false;
+  }
 
   return (
     <div class="llm-tasks-section">
@@ -38,18 +56,29 @@ export function LlmTasksPanel(props: LlmTasksPanelProps) {
             {shared.presets.length === 0 ? (
               <p class="llm-tasks-empty">{t("llmSettings.noPresets")}</p>
             ) : (
-              <select
-                value={shared.defaultPresetId}
-                onChange={(e) => onSetDefaultPresetId((e.target as HTMLSelectElement).value)}
-                aria-label={t("llmSettings.tasksDefaultModelLabel")}
-              >
-                <option value="">{t("llmSettings.selectPlaceholder")}</option>
-                {shared.presets.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.label || preset.model}
-                  </option>
-                ))}
-              </select>
+              <div class="task-model-select-row">
+                <select
+                  value={shared.defaultPresetId}
+                  onChange={(e) => onSetDefaultPresetId((e.target as HTMLSelectElement).value)}
+                  aria-label={t("llmSettings.tasksDefaultModelLabel")}
+                >
+                  <option value="">{t("llmSettings.selectPlaceholder")}</option>
+                  {shared.presets
+                    .filter((preset) => networkConnected || !isNetworkPresetProvider(preset.providerId))
+                    .map((preset) => (
+                      <option
+                        key={preset.id}
+                        value={preset.id}
+                        class={isNetworkPresetProvider(preset.providerId) ? "option-network" : undefined}
+                      >
+                        {preset.label || preset.model}
+                      </option>
+                    ))}
+                </select>
+                {networkConnected && isNetworkPreset(shared.defaultPresetId) ? (
+                  <span class="task-badge task-badge-network">{t("llmSettings.presetNetworkBadge")}</span>
+                ) : null}
+              </div>
             )}
           </div>
           <div class="task-model-field">

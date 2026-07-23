@@ -194,6 +194,7 @@ export function SettingsModal(props: SettingsModalProps) {
               onSetDefaultPresetId={onSetDefaultPresetId}
               onSetEmbeddingModel={onSetEmbeddingModel}
               onSetReasoningEffort={onSetReasoningEffort}
+              networkConnected={net.networkAvailable}
             />
           )}
         </div>

@@ -132,14 +132,14 @@
   text-overflow: ellipsis;
 }
 
-/* Badges (currently just "default") shown under a preset card's metadata
-   lines — see llm-settings-common-v1.md §3.1's "badge display: default /
-   per-task assignment / network-origin / shared" card concept. tc-note only
-   has the "default" badge today: it has no vision/network-mirrored-preset/
-   shared-model-list concepts (see LlmNetworkPanel.tsx and
+/* Badges shown under a preset card's metadata lines — see
+   llm-settings-common-v1.md §3.1's "badge display: default / per-task
+   assignment / network-origin / shared" card concept. tc-note has no
+   vision/shared-model-list concepts (see LlmNetworkPanel.tsx and
    llm-settings-common-v1.md's tc-note worker notes on why those don't apply
-   here), so the other three tc-translate badge kinds are simply absent
-   rather than stubbed out. */
+   here) and doesn't itself mirror AI Network models into the shared config
+   (networkModels.ts), so only "default" and "Network" (an entry another app
+   synced in — see isNetworkPresetProvider) are shown here. */
 .llm-connection-card-badges {
   display: flex;
   flex-wrap: wrap;
@@ -155,6 +155,21 @@
   padding: 1px 6px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
+}
+
+/* AI Networkルーム由来のカード（他のtik-chocoアプリが自分のAI Networkルームから
+   共有設定へ同期したprovider/preset）を、自分で設定したものと一目で区別する
+   ための強調。破線のaccentボーダー＋accent-bg背景（Networkバッジと同じ
+   トーン）を足す。 */
+.llm-connection-card.llm-connection-card-network {
+  border: 1px dashed var(--accent);
+  background: var(--accent-bg);
+}
+
+/* select横に添えるNetworkバッジ(LlmTasksPanel.tsx)。.task-badgeと同じ
+   accentトーンで統一し、Connectionタブのカードバッジと見た目を揃える。 */
+.task-badge-network {
+  flex-shrink: 0;
 }
 
 /* Round "x" delete chip, top-right of the card. */
