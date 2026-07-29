@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { preserveActiveEdit } from "../useCollab";
+import { preserveActiveEdit, resolveTargetRoom } from "../useCollab";
 
 // The active-block preservation rule a remote doc update goes through in
 // applyDocToLocalState. The hook itself can't be rendered under this project's
@@ -70,5 +70,56 @@ describe("preserveActiveEdit", () => {
   it("ignores an active index past the end of the local id list", () => {
     const remote = ["hello"];
     expect(preserveActiveEdit(remote, ["id-a"], 3, ["id-a"], ["hello"], ["hello"])).toBe(remote);
+  });
+});
+
+// Room membership is resolved per note, from scratch, every time the active
+// note changes. The bug this guards: membership used to persist across note
+// switches (a manual share stayed joined while the user browsed other notes,
+// and every note in a shared folder joined the folder's single room), which
+// made unrelated notes look — and behave — like they were being co-edited.
+describe("resolveTargetRoom", () => {
+  const noRooms = new Map<string, string>();
+
+  it("puts a note with no manual room and no shared folder in no room at all", () => {
+    expect(resolveTargetRoom("note-a", null, noRooms)).toEqual({ roomId: null, source: null });
+  });
+
+  it("uses the folder-derived room when the note's folder is shared", () => {
+    expect(resolveTargetRoom("note-a", "folder-room-a", noRooms)).toEqual({
+      roomId: "folder-room-a",
+      source: "folder",
+    });
+  });
+
+  it("prefers an explicit join over the folder's room for that note", () => {
+    const manual = new Map([["note-a", "manual-room"]]);
+    expect(resolveTargetRoom("note-a", "folder-room-a", manual)).toEqual({
+      roomId: "manual-room",
+      source: "manual",
+    });
+  });
+
+  it("does not carry another note's manual room onto the note now open", () => {
+    // Shared note-a, then opened note-b: note-b is unfiled and was never
+    // shared, so it must resolve to no room rather than inheriting the session.
+    const manual = new Map([["note-a", "manual-room"]]);
+    expect(resolveTargetRoom("note-b", null, manual)).toEqual({ roomId: null, source: null });
+  });
+
+  it("falls back to the folder room for a note the user never shared manually", () => {
+    const manual = new Map([["note-a", "manual-room"]]);
+    expect(resolveTargetRoom("note-b", "folder-room-b", manual)).toEqual({
+      roomId: "folder-room-b",
+      source: "folder",
+    });
+  });
+
+  it("rejoins a note's own manual room when the user comes back to it", () => {
+    const manual = new Map([["note-a", "manual-room"]]);
+    expect(resolveTargetRoom("note-a", null, manual)).toEqual({
+      roomId: "manual-room",
+      source: "manual",
+    });
   });
 });

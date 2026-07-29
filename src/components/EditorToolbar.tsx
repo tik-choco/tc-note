@@ -27,7 +27,6 @@ export function EditorToolbar(props: {
   onToggleChat: () => void;
   reviewOpen: boolean;
   onToggleReview: () => void;
-  onShareArticle: () => void;
 }) {
   const {
     sidebarOpen,
@@ -50,7 +49,6 @@ export function EditorToolbar(props: {
     onToggleChat,
     reviewOpen,
     onToggleReview,
-    onShareArticle,
   } = props;
   const t = useT();
   const { resolvedTheme, setTheme } = useAppSettings();
@@ -113,15 +111,6 @@ export function EditorToolbar(props: {
         )}
       </span>
       <div class="toolbar-divider" />
-      <button
-        type="button"
-        class="icon-btn"
-        onClick={onShareArticle}
-        title={t("editorToolbar.shareArticle")}
-        aria-label={t("editorToolbar.shareArticle")}
-      >
-        <Icon name="share" />
-      </button>
       <button
         type="button"
         class={`icon-btn ${chatOpen ? "icon-btn--active" : ""}`}

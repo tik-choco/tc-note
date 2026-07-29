@@ -92,13 +92,15 @@ export function FolderShareButton(props: {
     <div class="folder-share" ref={popoverRef} onClick={(e) => e.stopPropagation()}>
       <button
         type="button"
-        class={`icon-btn folder-share-trigger ${folder.roomId ? "folder-share-trigger--active" : ""}`}
+        class={`icon-btn folder-share-trigger ${folder.roomId ? "folder-share-trigger--active" : ""} ${
+          liveStatus === "connected" ? "folder-share-trigger--live" : ""
+        }`}
         onClick={toggleOpen}
         ref={triggerRef}
         title={folder.roomId ? t("folderShare.titleActive") : t("folderShare.titleInactive")}
         aria-label={t("folderShare.ariaLabel")}
       >
-        <Icon name={liveStatus === "connected" ? "people" : "link"} />
+        <Icon name={liveStatus === "connected" ? "people" : "share"} />
       </button>
       {open && pos && (
         <div class="folder-share-popover" style={{ top: `${pos.top}px`, left: `${pos.left}px` }}>
@@ -108,6 +110,7 @@ export function FolderShareButton(props: {
                 <span class="collab-badge-dot" aria-hidden="true" />
                 {t(`folderShare.status.${liveStatus ?? "idle"}`)}
               </div>
+              <p class="collab-hint">{t("folderShare.explainShared")}</p>
               <div class="collab-invite-row">
                 <input
                   class="collab-invite-input"
@@ -130,6 +133,7 @@ export function FolderShareButton(props: {
             </>
           ) : (
             <>
+              <p class="collab-hint">{t("folderShare.explainIdle")}</p>
               <button
                 type="button"
                 class="icon-btn icon-btn--accent folder-share-generate"

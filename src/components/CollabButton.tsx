@@ -98,7 +98,7 @@ export function CollabButton(props: {
         title={t(`collabButton.status.${status}`)}
         aria-label={t(`collabButton.status.${status}`)}
       >
-        <Icon name={status === "connected" ? "people" : "link"} />
+        <Icon name={status === "connected" ? "people" : "share"} />
       </button>
       {peers.length > 0 && (
         <div class="collab-avatars" aria-label={t("collabButton.peersConnected", { count: peers.length })}>
@@ -162,9 +162,12 @@ export function CollabButton(props: {
           )}
 
           {!roomId && (
-            <button type="button" class="collab-start" onClick={onShare}>
-              {t("collab.startSharing")}
-            </button>
+            <>
+              <p class="collab-hint">{t("collabButton.explainNote")}</p>
+              <button type="button" class="collab-start" onClick={onShare}>
+                {t("collab.startSharing")}
+              </button>
+            </>
           )}
           {!roomId && (
             <form class="collab-join-row" onSubmit={handleJoinById}>

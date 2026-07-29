@@ -80,6 +80,9 @@ export const de: Record<TranslationKey, Entry> = {
   "noteList.moveToFolder": "In Ordner verschieben",
   "noteList.unfiled": "Nicht zugeordnet",
   "noteList.delete": "Löschen",
+  "noteList.shareState.live": "Wird gerade gemeinsam bearbeitet (verbunden)",
+  "noteList.shareState.manual": "Geteilte Notiz (nicht verbunden)",
+  "noteList.shareState.folder": "Notiz in einem geteilten Ordner",
 
   "folderShare.status.idle": "Dieser Ordner wird geteilt (nicht verbunden)",
   "folderShare.status.connecting": "Verbindung wird hergestellt...",
@@ -95,6 +98,9 @@ export const de: Record<TranslationKey, Entry> = {
   "folderShare.joinSubmit": "Mit diesem Raum teilen",
   "folderShare.invalidRoomId": "Die Raum-ID ist ungültig",
   "folderShare.disableConfirm": "Teilen dieses Ordners beenden?",
+  "folderShare.explainShared":
+    "Notizen in diesem Ordner werden beim Öffnen gemeinsam bearbeitet – jede in ihrem eigenen Raum",
+  "folderShare.explainIdle": "Nach dem Teilen werden Notizen in diesem Ordner beim Öffnen gemeinsam bearbeitet",
 
   "import.noContent": "Es wurde kein importierbarer Inhalt gefunden",
   "import.unsupportedFormat": "Nicht unterstütztes Dateiformat (nur .md-Dateien können importiert werden)",
@@ -116,6 +122,8 @@ export const de: Record<TranslationKey, Entry> = {
   "collabButton.displayName": "Anzeigename",
   "collabButton.cursorColor": "Cursorfarbe",
 
+  "collabButton.explainNote": "Geteilt wird nur die gerade geöffnete Notiz",
+
   "collab.startSharing": "Teilen starten",
 
   "sidebar.newNote": "Neue Notiz",
@@ -125,7 +133,7 @@ export const de: Record<TranslationKey, Entry> = {
   "sidebar.searchTitle": "Suchen (Ctrl+K)",
   "sidebar.searchAriaLabel": "Suchen",
   "sidebar.emptyHint": "Erstellen Sie Ihre erste Notiz mit der Schaltfläche +",
-  "sidebar.favorites": "★ Favoriten",
+  "sidebar.favorites": "Favoriten",
   "sidebar.notebooks": "Notizbücher",
   "sidebar.addFolder": "Ordner hinzufügen",
   "sidebar.newFolderPlaceholder": "Ordnernamen eingeben und Enter drücken",
@@ -314,9 +322,6 @@ export const de: Record<TranslationKey, Entry> = {
   "translatePopover.error": "Übersetzung fehlgeschlagen",
   "translatePopover.listen": "Vorlesen",
   // --- note-article share (tc-chat handoff via the shared bus) ---
-  "editorToolbar.shareArticle": "Als Artikel mit tc-chat teilen",
-  "app.articleShared": "Als Artikel mit tc-chat geteilt",
-  "app.articleShareFailed": "Teilen mit tc-chat fehlgeschlagen",
   // --- end note-article share ---
 
   // --- shortcuts modal ---

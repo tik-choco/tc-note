@@ -217,8 +217,8 @@ const PATHS: Record<IconName, JSX.Element> = {
       <polyline points="8.5,13 10.5,15 15.5,10" />
     </>
   ),
-  // Classic three-node share glyph — used for pushing a note out to another
-  // app (tc-chat), distinct from "send" (in-app chat message) and
+  // Classic three-node share glyph — the collab-share trigger (note toolbar,
+  // folder rows, AI Network), distinct from "send" (in-app chat message) and
   // "arrow-forward" (open/navigate).
   share: (
     <>

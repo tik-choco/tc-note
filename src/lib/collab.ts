@@ -143,6 +143,46 @@ export function isValidRoomId(id: string): boolean {
   return ROOM_ID_PATTERN.test(id);
 }
 
+// 64-bit FNV-1a, run as two independent 32-bit passes (different offset
+// bases) and concatenated. Not cryptographic — this only needs to be stable
+// across peers and collision-free among the handful of notes that share one
+// folder, and it has to be synchronous (crypto.subtle is async, and the room
+// id is derived during render in useCollab).
+function hash64(input: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x01000193;
+  for (let i = 0; i < input.length; i++) {
+    const c = input.charCodeAt(i);
+    a = Math.imul(a ^ c, 0x01000193) >>> 0;
+    b = Math.imul(b ^ c, 0x85ebca6b) >>> 0;
+  }
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+
+/**
+ * The room a note in a shared folder actually joins.
+ *
+ * A folder's stored `roomId` is a *base* id, not a room anyone joins directly:
+ * one mistlib room carries exactly one Y.Doc (see CollabSession's order/
+ * blockContents/meta), so if every note in a folder joined the folder's id
+ * as-is they would all be editing the same single document — opening a second
+ * note in the folder would pour the first note's content into it. Deriving a
+ * per-note room from (folder base id, note id) instead gives each note its own
+ * doc while keeping "share the folder once" as the user-facing action.
+ *
+ * Both peers derive this locally, so it only lines up when they agree on the
+ * note's id — which is what the `note=` parameter in an invite link
+ * establishes (see CollabButton's inviteUrl and useCollab's adoption path).
+ *
+ * The folder base id is capped at 32 chars in the output so a pasted-in
+ * max-length (128 char) folder id can't push the result past ROOM_ID_PATTERN's
+ * limit; the hash covers the full untruncated id, so the truncation is
+ * cosmetic (it keeps the room recognizable in logs) and not a collision risk.
+ */
+export function deriveNoteRoomId(folderRoomId: string, noteId: string): string {
+  return `${folderRoomId.slice(0, 32)}-n${hash64(`${folderRoomId}:${noteId}`)}`;
+}
+
 // Defensive clamps applied to any identity data that can come from outside
 // this session's own control — a remote peer's awareness state, or a
 // previously-stored local identity read back out of localStorage. Neither

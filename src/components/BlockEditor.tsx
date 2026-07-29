@@ -28,7 +28,7 @@ export function BlockEditor(props: {
   activeBlockIndex: number | null;
   onActivate: (index: number) => void;
   onChange: (index: number, value: string) => void;
-  onDeactivate: () => void;
+  onDeactivate: (options?: { skipPrune?: boolean }) => void;
   onAddBlock: () => void;
   onSplit: (index: number, cursor: number, paste?: PastePayload) => void;
   onMergeIntoPrevious: (index: number) => void;
@@ -38,6 +38,9 @@ export function BlockEditor(props: {
   onFileTooLarge: (name: string) => void;
   onEscalateSelectAll: () => void;
   onExtendBlockSelection: (index: number, direction: 1 | -1) => void;
+  /** Arrow-up/down past a block's first/last line — move the caret into the
+   *  adjacent block. False at the first/last block. */
+  onNavigateBlock: (index: number, direction: 1 | -1, column: number) => boolean;
   selectedBlocks: Set<number>;
   onShiftSelectBlock: (index: number) => void;
   onClearSelection: () => void;
@@ -65,6 +68,7 @@ export function BlockEditor(props: {
     onFileTooLarge,
     onEscalateSelectAll,
     onExtendBlockSelection,
+    onNavigateBlock,
     selectedBlocks,
     onShiftSelectBlock,
     onClearSelection,
@@ -224,6 +228,7 @@ export function BlockEditor(props: {
             onMergeIntoPrevious={() => onMergeIntoPrevious(i)}
             onEscalateSelectAll={onEscalateSelectAll}
             onExtendBlockSelection={(dir) => onExtendBlockSelection(i, dir)}
+            onNavigateBlock={(dir, column) => onNavigateBlock(i, dir, column)}
             showEmptyPlaceholder={blocks.length === 1}
             peerEditors={collabPeers.filter((p) => p.activeBlock === i)}
             bibliography={bibliography}

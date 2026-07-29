@@ -24,6 +24,7 @@
 // teardown/reinit cycles since `node` itself is never replaced) fans events
 // out to the right one.
 import { MistNode } from "../vendor/mistlib/wrappers/web/index.js";
+import { mistSignalingConfig } from "./mistSignaling";
 
 export type NodeEventHandler = (
   eventType: number,
@@ -100,7 +101,9 @@ export async function ensureMistNode(): Promise<InstanceType<typeof MistNode>> {
   }
   if (!initPromise) {
     initPromise = (async () => {
-      if (!node) node = new MistNode(getPageNodeId());
+      // Only peers sharing the same invite salt/code discover each other, so
+      // pass the family-wide namespace or this node meets no one.
+      if (!node) node = new MistNode(getPageNodeId(), mistSignalingConfig());
       await node.init();
       installDispatcher(node);
       return node;

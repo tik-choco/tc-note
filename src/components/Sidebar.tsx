@@ -38,11 +38,19 @@ export function Sidebar(props: {
   onStartCreateFolder: () => void;
   onDeleteFolder: (id: string, name: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onSetFolderRoom: (folderId: string, roomId: string | null, isNew: boolean) => void;
-  /** The room id currently joined by the collab session (null if none) — lets a
-   * folder's share popover tell whether it's the room actually connected right
-   * now, vs. merely configured but not the active note's folder. */
-  collabActiveRoomId: string | null;
+  /** The *folder* room id backing the collab session's current join, or null when
+   * the live session isn't folder-sourced (or there is none) — lets a folder's
+   * share popover tell whether it's the folder actually connected right now, vs.
+   * merely configured but not the active note's folder. Compared against
+   * `folder.roomId` rather than the joined room id because the session joins a
+   * room derived per note from it (see deriveNoteRoomId). */
+  collabActiveFolderRoomId: string | null;
   collabStatus: CollabStatus;
+  /** Notes the user shared explicitly this session (see useCollab) — drives the
+   * per-row share marker together with each note's folder. */
+  manuallySharedNoteIds: ReadonlySet<string>;
+  /** The note currently connected to a room, if any. */
+  connectedNoteId: string | null;
 
   activeId: string;
   onSelectNote: (id: string) => void;
@@ -75,8 +83,10 @@ export function Sidebar(props: {
     onStartCreateFolder,
     onDeleteFolder,
     onSetFolderRoom,
-    collabActiveRoomId,
+    collabActiveFolderRoomId,
     collabStatus,
+    manuallySharedNoteIds,
+    connectedNoteId,
     activeId,
     onSelectNote,
     onDeleteNote,
@@ -228,11 +238,20 @@ export function Sidebar(props: {
 
         {favorites.length > 0 && (
           <div class="note-section">
-            <h3>{t("sidebar.favorites")}</h3>
+            {/* The star lives in the markup rather than inside the translated
+                string, so every locale gets the same glyph at the same size. */}
+            <h3>
+              <span class="note-section-icon" aria-hidden="true">
+                <Icon name="star" size={11} />
+              </span>
+              {t("sidebar.favorites")}
+            </h3>
             <NoteList
               notes={favorites}
               folders={folders}
               activeId={activeId}
+              manuallySharedNoteIds={manuallySharedNoteIds}
+              connectedNoteId={connectedNoteId}
               onSelect={onSelectNote}
               onDelete={onDeleteNote}
               onToggleFavorite={onToggleFavorite}
@@ -276,7 +295,9 @@ export function Sidebar(props: {
             return (
               <div class="folder-group" key={folder.id}>
                 <div
-                  class={`folder-header ${dragOverTarget === folder.id ? "drop-target" : ""}`}
+                  class={`folder-header ${folder.roomId ? "folder-header--shared" : ""} ${
+                    dragOverTarget === folder.id ? "drop-target" : ""
+                  }`}
                   {...dropHandlers(folder.id, folder.id)}
                 >
                   {/* A real button so expand/collapse works from the keyboard;
@@ -311,7 +332,7 @@ export function Sidebar(props: {
                   <FolderShareButton
                     folder={folder}
                     onSetRoom={onSetFolderRoom}
-                    liveStatus={folder.roomId && folder.roomId === collabActiveRoomId ? collabStatus : null}
+                    liveStatus={folder.roomId && folder.roomId === collabActiveFolderRoomId ? collabStatus : null}
                   />
                   <button
                     type="button"
@@ -328,6 +349,8 @@ export function Sidebar(props: {
                     notes={notesHere}
                     folders={folders}
                     activeId={activeId}
+                    manuallySharedNoteIds={manuallySharedNoteIds}
+                    connectedNoteId={connectedNoteId}
                     onSelect={onSelectNote}
                     onDelete={onDeleteNote}
                     onToggleFavorite={onToggleFavorite}
@@ -362,6 +385,8 @@ export function Sidebar(props: {
             notes={unfiledNotes}
             folders={folders}
             activeId={activeId}
+            manuallySharedNoteIds={manuallySharedNoteIds}
+            connectedNoteId={connectedNoteId}
             onSelect={onSelectNote}
             onDelete={onDeleteNote}
             onToggleFavorite={onToggleFavorite}

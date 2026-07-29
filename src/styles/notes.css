@@ -37,13 +37,33 @@
   flex: 1;
 }
 
+/* Section labels stay pinned while their list scrolls under them, so it's
+   always clear which group a row belongs to in a long sidebar. Opaque
+   background (the sidebar's own) so rows pass behind rather than through. */
+.note-section h3,
+.note-section-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-alt);
+}
+
 .note-section h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin: var(--space-0) 0;
+  padding: var(--space-1) 0;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--text-subtle);
   font-weight: 650;
+}
+
+.note-section-icon {
+  display: inline-flex;
+  color: var(--text-subtle);
 }
 
 .note-section-header {
@@ -52,7 +72,10 @@
   justify-content: space-between;
 }
 
+/* The header row is the sticky element here — the label inside it goes back
+   to flowing normally so the two don't stack two sticky layers. */
 .note-section-header h3 {
+  position: static;
   margin: var(--space-0) 0;
 }
 
@@ -129,6 +152,14 @@
 
 .folder-header:hover .folder-delete {
   opacity: 1;
+}
+
+/* A shared folder tints its own icon accent, so "which folders are shared"
+   reads from the icon column alone — no badge, no extra row. Its share
+   control is also the one control that stays visible at rest (see
+   collab.css), since it's the state, not just an action. */
+.folder-header--shared .folder-icon {
+  color: var(--accent);
 }
 
 /* The expand/collapse <button> inside the header row — styled as the row
@@ -238,6 +269,7 @@
 }
 
 .note-list li {
+  position: relative;
   display: flex;
   align-items: center;
   border-radius: var(--radius-lg);
@@ -262,6 +294,21 @@
   color: var(--accent);
 }
 
+/* Active row marker: a short accent bar on the leading edge. Reads as
+   "you are here" at a glance even where the background tint is subtle
+   (bright displays, light theme). */
+.note-list li.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
 .favorite-toggle {
   display: inline-flex;
   align-items: center;
@@ -274,7 +321,17 @@
   flex-shrink: 0;
   padding: 6px 0 6px 8px;
   font-size: 14px;
-  transition: color var(--dur-fast) var(--ease);
+  /* Quiet at rest on an ordinary note — the star column would otherwise
+     draw as much attention as the titles. It fades in on row hover/focus,
+     and a favorited note keeps it lit (rule below). */
+  opacity: 0;
+  transition: color var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+.note-list li:hover .favorite-toggle,
+.favorite-toggle:focus-visible,
+.favorite-toggle.is-favorite {
+  opacity: 1;
 }
 
 .favorite-toggle:hover {
@@ -326,6 +383,54 @@
   font-size: 11px;
   color: var(--text-subtle);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- per-note sharing marker ---------- */
+
+/* One 6px dot, three states (see noteShareState). Local notes render no dot
+   at all, so an ordinary list stays completely unmarked and anything shared
+   stands out on its own. */
+.note-share {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  align-self: center;
+}
+
+/* In a shared folder: outlined, not filled — sharing comes from the folder,
+   nobody is necessarily in this note right now. */
+.note-share--folder {
+  border: 1.5px solid var(--accent-border);
+}
+
+/* Shared on purpose, but not the note currently connected. */
+.note-share--manual {
+  background: var(--accent-border);
+}
+
+/* Connected right now: filled, with a soft halo so the one live note is
+   unmistakable among several shared ones. */
+.note-share--live {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-bg);
+  animation: tc-share-pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes tc-share-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px var(--success-bg);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--success-bg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-share--live {
+    animation: none;
+  }
 }
 
 .note-preview {
@@ -463,6 +568,8 @@
 @media (hover: none) {
   .folder-delete,
   .folder-note-add,
+  .folder-share-trigger,
+  .favorite-toggle,
   .note-more-btn {
     opacity: 1;
   }

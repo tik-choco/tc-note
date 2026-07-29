@@ -79,6 +79,9 @@ export const zh: Record<TranslationKey, Entry> = {
   "noteList.moveToFolder": "移动到文件夹",
   "noteList.unfiled": "未分类",
   "noteList.delete": "删除",
+  "noteList.shareState.live": "正在协同编辑（已连接）",
+  "noteList.shareState.manual": "已共享的笔记（未连接）",
+  "noteList.shareState.folder": "位于共享文件夹中的笔记",
 
   "folderShare.status.idle": "此文件夹已共享（未连接）",
   "folderShare.status.connecting": "正在连接...",
@@ -94,6 +97,8 @@ export const zh: Record<TranslationKey, Entry> = {
   "folderShare.joinSubmit": "使用此房间共享",
   "folderShare.invalidRoomId": "房间 ID 无效",
   "folderShare.disableConfirm": "要停止共享此文件夹吗？",
+  "folderShare.explainShared": "打开此文件夹中的笔记时会自动进入协同编辑（每篇笔记使用各自的房间）",
+  "folderShare.explainIdle": "共享后，打开此文件夹中的笔记时会进入协同编辑",
 
   "import.noContent": "未找到可导入的内容",
   "import.unsupportedFormat": "不支持的文件格式（仅可导入 .md 文件）",
@@ -114,6 +119,8 @@ export const zh: Record<TranslationKey, Entry> = {
   "collabButton.displayName": "显示名称",
   "collabButton.cursorColor": "光标颜色",
 
+  "collabButton.explainNote": "仅共享当前打开的笔记",
+
   "collab.startSharing": "开始共享",
 
   "sidebar.newNote": "新建笔记",
@@ -123,7 +130,7 @@ export const zh: Record<TranslationKey, Entry> = {
   "sidebar.searchTitle": "搜索 (Ctrl+K)",
   "sidebar.searchAriaLabel": "搜索",
   "sidebar.emptyHint": "点击 ＋ 按钮创建您的第一篇笔记",
-  "sidebar.favorites": "★ 收藏",
+  "sidebar.favorites": "收藏",
   "sidebar.notebooks": "笔记本",
   "sidebar.addFolder": "添加文件夹",
   "sidebar.newFolderPlaceholder": "输入文件夹名称并按 Enter",
@@ -305,9 +312,6 @@ export const zh: Record<TranslationKey, Entry> = {
   "translatePopover.error": "翻译失败",
   "translatePopover.listen": "朗读",
   // --- note-article share (tc-chat handoff via the shared bus) ---
-  "editorToolbar.shareArticle": "以文章形式分享到 tc-chat",
-  "app.articleShared": "已将笔记以文章形式分享到 tc-chat",
-  "app.articleShareFailed": "分享到 tc-chat 失败",
   // --- end note-article share ---
 
   // --- shortcuts modal ---
