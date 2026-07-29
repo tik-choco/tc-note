@@ -187,13 +187,17 @@
   font-style: italic;
 }
 
+/* Stands in for the block it creates, so it has to occupy exactly that
+   block's box: same negative gutter margin, same text padding, and the
+   inherited 16px body size rather than a smaller one. Otherwise clicking it
+   makes the placeholder visibly jump sideways, up, and change size as the
+   prompt is swapped for the real editor. */
 .block-add {
-  margin-top: var(--space-3);
-  padding: var(--space-3);
+  padding: 2px var(--space-3);
+  margin: 0 calc(-1 * var(--space-3));
   border-radius: var(--radius-md);
   color: var(--text-placeholder);
   cursor: text;
-  font-size: 14px;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
 
@@ -213,9 +217,10 @@
   box-shadow: 0 0 0 1px var(--accent-border), 0 0 0 3px var(--accent-bg);
 }
 
+/* No extra gap above: the prompt sits where the block it creates will land,
+   spaced from the previous block exactly as two blocks are spaced. */
 .block-add-row {
   position: relative;
-  margin-top: 8px;
 }
 
 .insert-menu {

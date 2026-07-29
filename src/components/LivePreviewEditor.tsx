@@ -16,13 +16,16 @@ import {
   type SlashTrigger,
 } from "../lib/cm/slashMenu";
 import { insertPasteAtCursor, isInsideOpenMathFence, type PastePayload } from "../lib/blocks";
-import { pasteCaret } from "../lib/blockActions";
+import { pendingBlockCaret } from "../lib/blockActions";
 import { INSERT_OPTIONS, resolveScaffold } from "../lib/blockScaffolds";
 import { useT } from "../hooks/useAppSettings";
 import { SelectionToolbar } from "./SelectionToolbar";
 import { SlashMenu } from "./SlashMenu";
 
 const LIST_LINE = /^\s*([-*+]|\d+\.)\s/;
+// A list-item line with no content after the marker — Enter on one of these
+// exits the list instead of adding yet another blank bullet.
+const EMPTY_LIST_LINE = /^\s*(?:[-*+]|\d+\.)\s*$/;
 
 // Slash-menu commands are the in-place-prefix subset of the "+" insert menu's
 // scaffolds (table/mermaid are their own multi-line block templates, not a
@@ -174,9 +177,12 @@ type Props = {
   onChange: (value: string) => void;
   onSplit: (cursor: number, paste?: PastePayload) => void;
   onMergeIntoPrevious: () => void;
-  onDeactivate: () => void;
+  onDeactivate: (options?: { skipPrune?: boolean }) => void;
   onEscalateSelectAll?: () => void;
   onExtendBlockSelection?: (direction: 1 | -1) => void;
+  /** Arrow-up/down past this block's first/last line — move the caret into
+   *  the adjacent block at roughly `column`. False if there is no such block. */
+  onNavigateBlock?: (direction: 1 | -1, column: number) => boolean;
 };
 
 // CodeMirror 6 editing surface for the active block. Same behaviors as the old
@@ -242,6 +248,12 @@ export function LivePreviewEditor(props: Props) {
     const { state } = view;
     const head = state.selection.main.head;
     const line = state.doc.lineAt(head);
+    // Enter on an already-empty list item exits the list — clear its marker
+    // rather than piling up another blank bullet.
+    if (LIST_LINE.test(line.text) && EMPTY_LIST_LINE.test(line.text)) {
+      view.dispatch(state.update({ changes: { from: line.from, to: line.to, insert: "" } }));
+      return true;
+    }
     // Keep list items and open $$…$$ math within one block: a plain newline.
     if (LIST_LINE.test(line.text) || isInsideOpenMathFence(state.doc.sliceString(0, head))) {
       view.dispatch(state.replaceSelection("\n"));
@@ -258,6 +270,30 @@ export function LivePreviewEditor(props: Props) {
     if (items.length === 0) return false;
     setSlashHighlight((h) => (h + direction + items.length) % items.length);
     return true;
+  }
+
+  // Vertical arrows move between this block's own (visual) lines as usual,
+  // and step into the adjacent block once there is no line left in that
+  // direction — each block is a separate editor, so nothing else carries the
+  // caret across the boundary and it would otherwise just stop there.
+  function handleArrowVertical(view: EditorView, direction: 1 | -1): boolean {
+    if (view.composing) return false;
+    // The slash menu, while open, owns the arrow keys.
+    if (handleSlashArrow(direction)) return true;
+    const range = view.state.selection.main;
+    if (!range.empty) return false;
+    const moved = view.moveVertically(range, direction === 1);
+    if (moved.head !== range.head) {
+      // moveVertically clamps to the document edge, which can slide the caret
+      // along the row it is already on (e.g. to the end of the last line)
+      // without actually leaving it — that still means "no line this way", so
+      // compare rendered rows rather than trusting the offset alone.
+      const from = view.coordsAtPos(range.head);
+      const to = view.coordsAtPos(moved.head);
+      if (!from || !to || Math.abs(from.top - to.top) > 1) return false;
+    }
+    const line = view.state.doc.lineAt(range.head);
+    return cb.current.onNavigateBlock?.(direction, range.head - line.from) ?? false;
   }
 
   function handleSlashEscape(): boolean {
@@ -355,13 +391,13 @@ export function LivePreviewEditor(props: Props) {
     const host = hostRef.current;
     if (!host) return;
 
-    // Initial caret: a multi-block paste hands its target here; otherwise the
-    // click that activated the block, else the end of the text.
+    // Initial caret: a split/merge/paste reflow hands its target here;
+    // otherwise the click that activated the block, else the end of the text.
     let caret: number;
-    const target = pasteCaret.target;
+    const target = pendingBlockCaret.target;
     if (target && target.index === cb.current.index) {
       caret = target.caret;
-      pasteCaret.target = null;
+      pendingBlockCaret.target = null;
     } else {
       caret = cb.current.pendingCaretRef.current ?? cb.current.text.length;
     }
@@ -406,8 +442,8 @@ export function LivePreviewEditor(props: Props) {
             { key: "Mod-b", run: (v) => toggleMarker(v, "**") },
             { key: "Mod-i", run: (v) => toggleMarker(v, "*") },
             { key: "#", run: cycleHeading },
-            { key: "ArrowDown", run: () => handleSlashArrow(1) },
-            { key: "ArrowUp", run: () => handleSlashArrow(-1) },
+            { key: "ArrowDown", run: (v) => handleArrowVertical(v, 1) },
+            { key: "ArrowUp", run: (v) => handleArrowVertical(v, -1) },
             { key: "Escape", run: handleSlashEscape },
             { key: "Shift-ArrowDown", run: handleShiftDown },
             { key: "Shift-ArrowUp", run: handleShiftUp },
@@ -417,12 +453,21 @@ export function LivePreviewEditor(props: Props) {
             if (u.docChanged) cb.current.onChange(u.state.doc.toString());
           }),
           EditorView.domEventHandlers({
-            blur: () => {
+            blur: (e) => {
               // Ignore the blur emitted while the editor is being unmounted
               // programmatically — that's a focus hand-off, not a click-away.
               if (destroyingRef.current) return false;
               setToolbarRect(null);
-              cb.current.onDeactivate();
+              // Clicking straight into another block focuses that block's
+              // rendered div (tabIndex=0) on mousedown, so this blur fires
+              // *before* its click handler activates it — and that handler
+              // carries a block index captured from the current render. Tell
+              // onDeactivate to skip its empty-block prune in that case:
+              // pruning here would renumber the blocks out from under the
+              // pending click, activating the wrong block (or none at all).
+              const next = e.relatedTarget as HTMLElement | null;
+              const toBlock = !!next?.closest?.(".block-row");
+              cb.current.onDeactivate({ skipPrune: toBlock });
               return false;
             },
             keydown: (e) => {

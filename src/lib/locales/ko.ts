@@ -79,6 +79,9 @@ export const ko: Record<TranslationKey, Entry> = {
   "noteList.moveToFolder": "폴더로 이동",
   "noteList.unfiled": "미분류",
   "noteList.delete": "삭제",
+  "noteList.shareState.live": "실시간 공동 편집 중(연결됨)",
+  "noteList.shareState.manual": "공유 중인 노트(연결 안 됨)",
+  "noteList.shareState.folder": "공유 폴더 안의 노트",
 
   "folderShare.status.idle": "이 폴더는 공유 중입니다 (연결 안 됨)",
   "folderShare.status.connecting": "연결 중...",
@@ -94,6 +97,8 @@ export const ko: Record<TranslationKey, Entry> = {
   "folderShare.joinSubmit": "이 방으로 공유",
   "folderShare.invalidRoomId": "방 ID가 올바르지 않습니다",
   "folderShare.disableConfirm": "이 폴더의 공유를 중지하시겠습니까?",
+  "folderShare.explainShared": "이 폴더의 노트는 열면 자동으로 공동 편집이 됩니다(노트마다 별도의 룸)",
+  "folderShare.explainIdle": "공유하면 이 폴더의 노트를 열 때 공동 편집이 됩니다",
 
   "import.noContent": "가져올 수 있는 콘텐츠를 찾을 수 없습니다",
   "import.unsupportedFormat": "지원하지 않는 파일 형식입니다 (.md 파일만 가져올 수 있습니다)",
@@ -114,6 +119,8 @@ export const ko: Record<TranslationKey, Entry> = {
   "collabButton.displayName": "표시 이름",
   "collabButton.cursorColor": "커서 색상",
 
+  "collabButton.explainNote": "지금 열려 있는 노트만 공유됩니다",
+
   "collab.startSharing": "공유 시작",
 
   "sidebar.newNote": "새 노트",
@@ -123,7 +130,7 @@ export const ko: Record<TranslationKey, Entry> = {
   "sidebar.searchTitle": "검색 (Ctrl+K)",
   "sidebar.searchAriaLabel": "검색",
   "sidebar.emptyHint": "＋ 버튼으로 첫 노트를 만들어 보세요",
-  "sidebar.favorites": "★ 즐겨찾기",
+  "sidebar.favorites": "즐겨찾기",
   "sidebar.notebooks": "노트북",
   "sidebar.addFolder": "폴더 추가",
   "sidebar.newFolderPlaceholder": "폴더 이름을 입력하고 Enter를 누르세요",
@@ -306,9 +313,6 @@ export const ko: Record<TranslationKey, Entry> = {
   "translatePopover.error": "번역에 실패했습니다",
   "translatePopover.listen": "듣기",
   // --- note-article share (tc-chat handoff via the shared bus) ---
-  "editorToolbar.shareArticle": "tc-chat에 기사로 공유",
-  "app.articleShared": "tc-chat에 기사로 공유했습니다",
-  "app.articleShareFailed": "tc-chat 공유에 실패했습니다",
   // --- end note-article share ---
 
   // --- shortcuts modal ---

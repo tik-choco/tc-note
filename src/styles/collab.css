@@ -284,21 +284,52 @@
   color: var(--text-subtle);
 }
 
+/* One-line explanation of what a share actually covers (this note / this
+   folder's notes), shown in both share popovers so the scope is stated where
+   the action is taken rather than only discovered afterwards. */
+.collab-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-subtle);
+}
+
 .folder-share {
   position: relative;
   display: inline-flex;
 }
 
+/* Sharing a folder is an action you go looking for, so the control stays out
+   of the way until the row is hovered/focused — *unless* the folder is
+   actually shared, in which case the icon is that row's state indicator and
+   has to be visible at rest. */
 .folder-share-trigger {
   width: 22px;
   height: 22px;
   font-size: 12px;
-  opacity: 0.5;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+/* :focus-within on the wrapper keeps the trigger visible for as long as its
+   popover is open, even after the pointer leaves the folder row. */
+.folder-header:hover .folder-share-trigger,
+.folder-share:focus-within .folder-share-trigger {
+  opacity: 1;
 }
 
 .folder-share-trigger--active {
   opacity: 1;
+  color: var(--accent);
+}
+
+/* Connected right now — the icon itself also switches to the "people" glyph
+   (see FolderShareButton), this just gives it the same soft halo the note
+   rows' live dot uses. */
+.folder-share-trigger--live {
+  opacity: 1;
   color: var(--success);
+  box-shadow: 0 0 0 3px var(--success-bg);
 }
 
 .folder-share-popover {

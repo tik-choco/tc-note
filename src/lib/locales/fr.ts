@@ -81,6 +81,9 @@ export const fr: Record<TranslationKey, Entry> = {
   "noteList.moveToFolder": "Déplacer vers un dossier",
   "noteList.unfiled": "Non classé",
   "noteList.delete": "Supprimer",
+  "noteList.shareState.live": "Édition collaborative en cours (connectée)",
+  "noteList.shareState.manual": "Note partagée (non connectée)",
+  "noteList.shareState.folder": "Note dans un dossier partagé",
 
   "folderShare.status.idle": "Ce dossier est partagé (non connecté)",
   "folderShare.status.connecting": "Connexion...",
@@ -96,6 +99,10 @@ export const fr: Record<TranslationKey, Entry> = {
   "folderShare.joinSubmit": "Partager avec cette salle",
   "folderShare.invalidRoomId": "L'ID de salle n'est pas valide",
   "folderShare.disableConfirm": "Arrêter de partager ce dossier ?",
+  "folderShare.explainShared":
+    "Les notes de ce dossier passent en édition collaborative à leur ouverture, chacune dans sa propre salle",
+  "folderShare.explainIdle":
+    "Une fois le dossier partagé, ses notes passent en édition collaborative à leur ouverture",
 
   "import.noContent": "Aucun contenu importable n'a été trouvé",
   "import.unsupportedFormat": "Format de fichier non pris en charge (seuls les fichiers .md peuvent être importés)",
@@ -118,6 +125,8 @@ export const fr: Record<TranslationKey, Entry> = {
   "collabButton.displayName": "Nom affiché",
   "collabButton.cursorColor": "Couleur du curseur",
 
+  "collabButton.explainNote": "Seule la note actuellement ouverte est partagée",
+
   "collab.startSharing": "Démarrer le partage",
 
   "sidebar.newNote": "Nouvelle note",
@@ -127,7 +136,7 @@ export const fr: Record<TranslationKey, Entry> = {
   "sidebar.searchTitle": "Rechercher (Ctrl+K)",
   "sidebar.searchAriaLabel": "Rechercher",
   "sidebar.emptyHint": "Créez votre première note avec le bouton +",
-  "sidebar.favorites": "★ Favoris",
+  "sidebar.favorites": "Favoris",
   "sidebar.notebooks": "Carnets",
   "sidebar.addFolder": "Ajouter un dossier",
   "sidebar.newFolderPlaceholder": "Saisir un nom de dossier et appuyer sur Entrée",
@@ -316,9 +325,6 @@ export const fr: Record<TranslationKey, Entry> = {
   "translatePopover.error": "Échec de la traduction",
   "translatePopover.listen": "Écouter",
   // --- note-article share (tc-chat handoff via the shared bus) ---
-  "editorToolbar.shareArticle": "Partager avec tc-chat en tant qu'article",
-  "app.articleShared": "Note partagée avec tc-chat en tant qu'article",
-  "app.articleShareFailed": "Échec du partage avec tc-chat",
   // --- end note-article share ---
 
   // --- shortcuts modal ---

@@ -24,9 +24,8 @@ import { createNoteInboxActions, noteInboxTopic } from "./lib/noteInbox";
 import { readShared, subscribeShared } from "./lib/sharedBus";
 import { schedulePublishNoteDocIndex } from "./lib/noteDocExport";
 import { createBlockActions } from "./lib/blockActions";
-import { shareNoteAsArticle } from "./lib/shareArticle";
 import { useNoteSession } from "./hooks/useNoteSession";
-import { useNoteUrlSync, withNoteParam } from "./hooks/useNoteUrlSync";
+import { useNoteUrlSync } from "./hooks/useNoteUrlSync";
 import { useToast } from "./hooks/useToast";
 import { useCollab } from "./hooks/useCollab";
 import { useLlmSettings } from "./hooks/useLlmSettings";
@@ -242,7 +241,12 @@ export function App() {
     opened
       .then(() => {
         console.debug("[collab] mount: joining room from URL", { roomId });
-        return collab.joinRoom(roomId);
+        // Attach the room to the invited note explicitly: opening it (here or
+        // via useNoteUrlSync's deep-link effect) is asynchronous, so the
+        // active note may still be the previous one at this point, and the
+        // room would otherwise be recorded against — and then dropped with —
+        // whichever note that was.
+        return collab.joinRoom(roomId, { forNoteId: noteIdFromUrl ?? undefined });
       })
       .catch((err) => {
         console.debug("[collab] mount: joinRoom from URL failed", { roomId, err });
@@ -251,11 +255,25 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function pushRoomToUrl(roomId: string) {
-    const url = new URL(withNoteParam(activeId));
-    url.searchParams.set("room", roomId);
-    window.history.replaceState(null, "", url.toString());
-  }
+  // Keeps `?room=` pointing at the room the user explicitly joined, and only
+  // while they're on the note they joined it for — the `note` param moves
+  // with the active note (see useNoteUrlSync), so a room left behind in the
+  // URL would, on the next reload, be read back as an invite and pull an
+  // unrelated note into it. Folder-derived rooms are deliberately left out:
+  // they're re-derived from the folder on load anyway, and pinning one here
+  // would outlive the folder's sharing being turned off.
+  //
+  // Declared after useNoteUrlSync's hook call so it reads a `location` that
+  // already has the current `note` param when both update in one commit.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const current = url.searchParams.get("room");
+    const next = collab.roomSource === "manual" ? collab.roomId : null;
+    if (current === next) return;
+    if (next) url.searchParams.set("room", next);
+    else url.searchParams.delete("room");
+    window.history.replaceState(window.history.state, "", url.toString());
+  }, [collab.roomId, collab.roomSource]);
 
   function handleCollabShare() {
     const roomId = collab.roomId ?? crypto.randomUUID();
@@ -265,14 +283,13 @@ export function App() {
     // join() failures already surface via collab.status ("error"), shown in
     // the popover — nothing further to do here besides not leaving an
     // unhandled rejection if the connection attempt fails.
-    collab.joinRoom(roomId, { seed: true }).then(() => pushRoomToUrl(roomId)).catch(() => {});
+    collab.joinRoom(roomId, { seed: true }).catch(() => {});
   }
 
   // Returns an error message to show inline in the popover, or null on success.
   async function handleCollabJoinById(roomId: string): Promise<string | null> {
     try {
       await collab.joinRoom(roomId);
-      pushRoomToUrl(roomId.trim());
       return null;
     } catch (err) {
       return err instanceof Error ? err.message : t("app.joinRoomFailed");
@@ -281,9 +298,6 @@ export function App() {
 
   function handleCollabLeave() {
     collab.leaveRoom();
-    const url = new URL(window.location.href);
-    url.searchParams.delete("room");
-    window.history.replaceState(null, "", url.toString());
   }
 
   // The browser tab shows the note being edited.
@@ -385,20 +399,6 @@ export function App() {
     setNotes(toggleFavorite(id));
   }
 
-  // Publishes the current note onto the shared bus's "note-article" topic
-  // (see lib/shareArticle.ts) so an open tc-chat tab on the same origin can
-  // offer to import it as a board post. Same-origin only; no direct
-  // cross-app import.
-  async function handleShareArticle() {
-    try {
-      await shareNoteAsArticle(title || t("pageTitle.placeholder"), content);
-      showToast(t("app.articleShared"));
-    } catch (error) {
-      showToast(t("app.articleShareFailed"));
-      console.error("shareNoteAsArticle failed", error);
-    }
-  }
-
   // On narrow screens the sidebar overlays the editor, so opening or creating
   // a note should reveal the editor by closing it. Desktop keeps it open.
   function handleSelectNote(id: string) {
@@ -463,6 +463,17 @@ export function App() {
     selectionAnchorRef.current = index;
     selectionFocusRef.current = index;
     setActiveBlockIndex(index);
+  }
+
+  // Arrow-up/down carried the caret out of `index` and into its neighbour —
+  // re-anchor block selection on whichever block now holds the caret, so a
+  // following Shift+Arrow extends from there rather than from wherever the
+  // caret happened to be before.
+  function handleNavigateBlock(index: number, direction: 1 | -1, column: number): boolean {
+    if (!blockActions.focusAdjacentBlock(index, direction, column)) return false;
+    selectionAnchorRef.current = index + direction;
+    selectionFocusRef.current = index + direction;
+    return true;
   }
 
   function handleShiftSelectBlock(index: number) {
@@ -679,8 +690,12 @@ export function App() {
         onStartCreateFolder={() => setCreatingFolder((v) => !v)}
         onDeleteFolder={handleDeleteFolder}
         onSetFolderRoom={handleSetFolderRoom}
-        collabActiveRoomId={collab.roomId}
+        collabActiveFolderRoomId={collab.roomSource === "folder" ? folderRoomId : null}
         collabStatus={collab.status}
+        manuallySharedNoteIds={collab.manuallySharedNoteIds}
+        // Room membership is per note, so the connected room is always the
+        // active note's (see useCollab's resolveTargetRoom).
+        connectedNoteId={collab.status === "connected" ? activeId : null}
         activeId={activeId}
         onSelectNote={handleSelectNote}
         onDeleteNote={handleDelete}
@@ -714,7 +729,6 @@ export function App() {
           onToggleChat={handleToggleChat}
           reviewOpen={reviewOpen}
           onToggleReview={handleToggleReview}
-          onShareArticle={handleShareArticle}
         />
 
         <div class="content-area" onClick={handleCanvasClick}>
@@ -736,6 +750,7 @@ export function App() {
             onFileTooLarge={(name) => showToast(t("blockEditor.fileTooLarge", { name }))}
             onEscalateSelectAll={handleEscalateSelectAll}
             onExtendBlockSelection={handleExtendBlockSelection}
+            onNavigateBlock={handleNavigateBlock}
             selectedBlocks={selectedBlocks}
             onShiftSelectBlock={handleShiftSelectBlock}
             onClearSelection={clearBlockSelection}

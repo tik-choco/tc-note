@@ -1,11 +1,11 @@
 import { insertPasteAtCursor, joinBlocks, splitBlocks, type PastePayload } from "./blocks";
 
-// Cross-block caret hand-off for a multi-block paste. The block that ends up
-// active after the reflow is a *different* editor instance than the one the
-// paste event fired on, so its caret can't be positioned inline — splitBlockAtCursor
-// records the target (block index + offset) here and LivePreviewEditor consumes
-// it once as it activates (see LivePreviewEditor.tsx).
-export const pasteCaret: { target: { index: number; caret: number } | null } = { target: null };
+// Cross-block caret hand-off: whenever an action activates a *different*
+// block instance than the one the triggering event fired on (paste reflow,
+// Enter-split, Backspace-merge), that new instance can't be positioned
+// inline — the action records the target (block index + offset) here and
+// LivePreviewEditor consumes it once as it activates (see LivePreviewEditor.tsx).
+export const pendingBlockCaret: { target: { index: number; caret: number } | null } = { target: null };
 
 // Builds the handlers the block editor needs (edit/activate/jump), closed
 // over the current block state. Plain closures rather than a hook — nothing
@@ -31,8 +31,15 @@ export function createBlockActions(state: {
     setContent(joinBlocks(next));
   }
 
-  function deactivateBlock() {
+  // `skipPrune` is set when focus is moving straight to another block: the
+  // click that lands next already carries a block index captured from the
+  // *current* (pre-prune) render, so renumbering the blocks here would point
+  // it at the wrong block — or, if the clicked block is itself the empty one
+  // being pruned, at no block at all. The prune is only cleanup, so it can
+  // safely wait for a deactivation that isn't handing focus to a sibling.
+  function deactivateBlock(options?: { skipPrune?: boolean }) {
     setActiveBlockIndex(null);
+    if (options?.skipPrune) return;
     // Re-derive block boundaries from the current blocksSnapshot (merges/
     // creates blocks based on blank lines typed while editing) and drop
     // stray empty blocks so the note doesn't accumulate clutter. Rebuilt
@@ -68,7 +75,7 @@ export function createBlockActions(state: {
       setBlocksSnapshot(result.blocks);
       setContent(joinBlocks(result.blocks));
       // Hand the caret offset to the block that's about to activate.
-      pasteCaret.target = { index: result.activeIndex, caret: result.caret };
+      pendingBlockCaret.target = { index: result.activeIndex, caret: result.caret };
       setActiveBlockIndex(result.activeIndex);
       return;
     }
@@ -79,6 +86,9 @@ export function createBlockActions(state: {
     next.splice(index, 1, before, after);
     setBlocksSnapshot(next);
     setContent(joinBlocks(next));
+    // The new block is "after" — the text past the split point — so the
+    // caret belongs at its very start, right where Enter was pressed.
+    pendingBlockCaret.target = { index: index + 1, caret: 0 };
     setActiveBlockIndex(index + 1);
   }
 
@@ -92,7 +102,33 @@ export function createBlockActions(state: {
     next.splice(index - 1, 2, prev + current);
     setBlocksSnapshot(next);
     setContent(joinBlocks(next));
+    // The merge boundary — end of what used to be `prev` — is where the
+    // caret was sitting when Backspace triggered the merge.
+    pendingBlockCaret.target = { index: index - 1, caret: prev.length };
     setActiveBlockIndex(index - 1);
+  }
+
+  // Arrow-up/down that has run out of lines inside the current block steps
+  // into the adjacent one. Each block is its own editor, so without this the
+  // caret just stops dead at every block boundary and vertical navigation
+  // looks broken. Enters on the line nearest the edge it came from — the top
+  // line when moving down, the bottom line when moving up — holding `column`
+  // as far as that line's length allows, so the caret tracks roughly straight
+  // down/up the page the way it would in one continuous document.
+  //
+  // Returns false at the first/last block so the caller can fall back to
+  // CodeMirror's own "move to start/end of doc" handling.
+  function focusAdjacentBlock(index: number, direction: 1 | -1, column: number): boolean {
+    const target = index + direction;
+    if (target < 0 || target >= blocksSnapshot.length) return false;
+    const lines = blocksSnapshot[target].split("\n");
+    const lineIndex = direction === 1 ? 0 : lines.length - 1;
+    let caret = 0;
+    for (let i = 0; i < lineIndex; i++) caret += lines[i].length + 1;
+    caret += Math.min(column, lines[lineIndex].length);
+    pendingBlockCaret.target = { index: target, caret };
+    setActiveBlockIndex(target);
+    return true;
   }
 
   // Inserts one or more new blocks right after `index`, in order. `focus`
@@ -166,6 +202,7 @@ export function createBlockActions(state: {
     addBlockAtEnd,
     splitBlockAtCursor,
     mergeIntoPrevious,
+    focusAdjacentBlock,
     insertBlockAfter,
     insertBlocksAfter,
     removeBlocks,

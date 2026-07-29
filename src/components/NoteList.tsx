@@ -1,6 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 import type { JSX } from "preact";
-import type { Folder, NoteMeta } from "../lib/mistlib";
+import { noteShareState, type Folder, type NoteMeta, type NoteShareState } from "../lib/mistlib";
 import type { Language } from "../lib/appSettings";
 import { formatRelativeTime, formatTime } from "../lib/util";
 import { useAppSettings, useT } from "../hooks/useAppSettings";
@@ -11,12 +11,26 @@ export function NoteList(props: {
   notes: NoteMeta[];
   folders: Folder[];
   activeId: string;
+  /** Notes shared by explicit user action this session — see useCollab. */
+  manuallySharedNoteIds: ReadonlySet<string>;
+  /** The note whose room the collab session is connected to right now, if any. */
+  connectedNoteId: string | null;
   onSelect: (id: string) => void;
   onDelete: (id: string, name: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onToggleFavorite: (id: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onMoveFolder: (id: string, folderId: string | null) => void;
 }) {
-  const { notes, folders, activeId, onSelect, onDelete, onToggleFavorite, onMoveFolder } = props;
+  const {
+    notes,
+    folders,
+    activeId,
+    manuallySharedNoteIds,
+    connectedNoteId,
+    onSelect,
+    onDelete,
+    onToggleFavorite,
+    onMoveFolder,
+  } = props;
   const t = useT();
   const { language } = useAppSettings();
   if (notes.length === 0) {
@@ -30,6 +44,7 @@ export function NoteList(props: {
           note={n}
           folders={folders}
           active={n.id === activeId}
+          shareState={noteShareState(n, folders, manuallySharedNoteIds, connectedNoteId)}
           language={language}
           t={t}
           onSelect={onSelect}
@@ -49,6 +64,7 @@ function NoteRow(props: {
   note: NoteMeta;
   folders: Folder[];
   active: boolean;
+  shareState: NoteShareState;
   language: Language;
   t: (key: Parameters<ReturnType<typeof useT>>[0], params?: Record<string, string | number>) => string;
   onSelect: (id: string) => void;
@@ -56,7 +72,18 @@ function NoteRow(props: {
   onToggleFavorite: (id: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onMoveFolder: (id: string, folderId: string | null) => void;
 }) {
-  const { note: n, folders, active, language, t, onSelect, onDelete, onToggleFavorite, onMoveFolder } = props;
+  const {
+    note: n,
+    folders,
+    active,
+    shareState,
+    language,
+    t,
+    onSelect,
+    onDelete,
+    onToggleFavorite,
+    onMoveFolder,
+  } = props;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -139,6 +166,18 @@ function NoteRow(props: {
       >
         <span class="note-title-row">
           <span class="note-title">{n.title || t("pageTitle.placeholder")}</span>
+          {/* Sharing marker: a dot, not a word, so a list of mostly-local
+              notes stays quiet — the state it stands for is in the tooltip
+              and the aria-label. Absent entirely for a purely local note,
+              which is what makes the shared ones scannable. */}
+          {shareState !== "local" && (
+            <span
+              class={`note-share note-share--${shareState}`}
+              title={t(`noteList.shareState.${shareState}`)}
+              aria-label={t(`noteList.shareState.${shareState}`)}
+              role="img"
+            />
+          )}
           <span class="note-time" title={formatTime(n.updatedAt, language)}>{formatRelativeTime(n.updatedAt, language)}</span>
         </span>
         <span class="note-preview">{n.preview}</span>

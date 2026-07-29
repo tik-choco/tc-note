@@ -5,7 +5,15 @@
 // collab.ts is.
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { CollabSession, peelLegacyEnvelope, type CollabUser, type MistNodeAccess, type PeerInfo } from "../collab";
+import {
+  CollabSession,
+  deriveNoteRoomId,
+  isValidRoomId,
+  peelLegacyEnvelope,
+  type CollabUser,
+  type MistNodeAccess,
+  type PeerInfo,
+} from "../collab";
 import { reconcileBlockIds } from "../blockDiff";
 import type { MistNode } from "../../vendor/mistlib/wrappers/web/index.js";
 
@@ -367,5 +375,47 @@ describe("peelLegacyEnvelope (mistlib-dev#16 double-wrap compat)", () => {
 
     a.destroy();
     b.destroy();
+  });
+});
+
+// One mistlib room carries exactly one Y.Doc, so a folder's notes each need
+// their own room — otherwise opening a second note in a shared folder joins
+// the room holding the first note's document and overwrites it. These pin the
+// properties that makes that safe: same inputs -> same room on every peer,
+// different notes -> different rooms, and always a joinable room id.
+describe("deriveNoteRoomId", () => {
+  const folder = "0f3b9c2a-1d4e-4f6a-9b8c-2e7d5a1f3b60";
+
+  it("is deterministic for the same folder/note pair", () => {
+    expect(deriveNoteRoomId(folder, "note-a")).toBe(deriveNoteRoomId(folder, "note-a"));
+  });
+
+  it("gives each note in a folder its own room", () => {
+    expect(deriveNoteRoomId(folder, "note-a")).not.toBe(deriveNoteRoomId(folder, "note-b"));
+  });
+
+  it("gives the same note a different room in a different folder", () => {
+    expect(deriveNoteRoomId(folder, "note-a")).not.toBe(deriveNoteRoomId("other-folder", "note-a"));
+  });
+
+  it("never collides across a realistic folder's worth of notes", () => {
+    const rooms = new Set(Array.from({ length: 2000 }, (_, i) => deriveNoteRoomId(folder, `note-${i}`)));
+    expect(rooms.size).toBe(2000);
+  });
+
+  it("produces a joinable room id even from a max-length folder id", () => {
+    // A pasted-in folder id may already sit at ROOM_ID_PATTERN's 128-char
+    // limit; the derived id must still fit, or the join is rejected outright.
+    const maxLength = "f".repeat(128);
+    expect(isValidRoomId(deriveNoteRoomId(maxLength, "note-a"))).toBe(true);
+    expect(isValidRoomId(deriveNoteRoomId(folder, crypto.randomUUID()))).toBe(true);
+  });
+
+  it("still separates notes when two folder ids share their first 32 chars", () => {
+    // Only the first 32 chars survive into the readable prefix — the hash
+    // covers the whole id, so ids that differ only past that still diverge.
+    const a = `${"a".repeat(32)}-first`;
+    const b = `${"a".repeat(32)}-second`;
+    expect(deriveNoteRoomId(a, "note-a")).not.toBe(deriveNoteRoomId(b, "note-a"));
   });
 });

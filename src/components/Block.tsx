@@ -205,11 +205,32 @@ function sourceOffsetFromClick(container: HTMLElement, source: string, x: number
     prefix += cur.textContent ?? "";
   }
 
+  // Rough proportional estimate of where the click should land in the
+  // source: markdown syntax characters (**, #, etc.) stretch the source
+  // relative to the rendered text, but the mapping is still roughly linear,
+  // so this narrows the needle search to the occurrence nearest the click
+  // instead of always the first one in the block (which, for short/common
+  // needles repeated earlier in the text, put the caret in the wrong spot).
+  const totalVisible = container.textContent?.length ?? prefix.length;
+  const estimatedPos = totalVisible > 0 ? (prefix.length / totalVisible) * source.length : 0;
+
   for (const len of [24, 12, 6, 3]) {
     const needle = prefix.slice(-len);
     if (!needle.trim()) continue;
-    const at = source.indexOf(needle);
-    if (at >= 0) return at + needle.length;
+    let best: number | null = null;
+    let bestDist = Infinity;
+    let searchFrom = 0;
+    for (;;) {
+      const at = source.indexOf(needle, searchFrom);
+      if (at < 0) break;
+      const dist = Math.abs(at - estimatedPos);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = at;
+      }
+      searchFrom = at + 1;
+    }
+    if (best !== null) return best + needle.length;
   }
   return prefix.trim() === "" ? 0 : null;
 }
@@ -221,7 +242,9 @@ export function Block(props: {
   active: boolean;
   onActivate: () => void;
   onChange: (value: string) => void;
-  onDeactivate: () => void;
+  /** `skipPrune` defers the empty-block cleanup when focus is moving to
+   *  another block — see deactivateBlock in blockActions.ts. */
+  onDeactivate: (options?: { skipPrune?: boolean }) => void;
   /** Enter-split when called with just a cursor; multi-block paste reflow when
    *  called with a payload (see splitBlockAtCursor). */
   onSplit: (cursor: number, paste?: PastePayload) => void;
@@ -233,6 +256,9 @@ export function Block(props: {
   /** Shift+Down/Up pressed at the block's bottom/top edge — escalate to
    *  whole-block selection extending in that direction (+1 down, -1 up). */
   onExtendBlockSelection?: (direction: 1 | -1) => void;
+  /** Arrow-up/down past this block's first/last line — move the caret into
+   *  the adjacent block at roughly `column`. False if there is no such block. */
+  onNavigateBlock?: (direction: 1 | -1, column: number) => boolean;
   /** Show the "click to start typing" invite in the empty state. Only true for
    *  the sole block of an empty note — otherwise repeated blank lines (e.g. from
    *  pressing Enter several times) would each print the invite text. */
@@ -254,6 +280,7 @@ export function Block(props: {
     peerEditors = [],
     onEscalateSelectAll,
     onExtendBlockSelection,
+    onNavigateBlock,
     showEmptyPlaceholder = true,
     bibliography = EMPTY_BIBLIOGRAPHY,
   } = props;
@@ -300,12 +327,14 @@ export function Block(props: {
     }
 
     // The mouse-up that ends a drag-to-select fires a click too. If the user
-    // just selected text inside this rendered block (to copy it), don't swap
-    // to the editor — that would collapse the selection to a caret and make
-    // selecting text in view mode impossible. A plain click leaves the
-    // selection collapsed, so this only bails on a real range selection.
+    // just selected text (to copy it) — including a drag that started in a
+    // different block and was dragged into this one, which lands the
+    // selection's anchor outside `container` — don't swap to the editor, as
+    // that would collapse the selection to a caret and make selecting text
+    // in view mode (single- or multi-block) impossible. A plain click leaves
+    // the selection collapsed, so this only bails on a real range selection.
     const selection = window.getSelection();
-    if (selection && !selection.isCollapsed && container.contains(selection.anchorNode)) {
+    if (selection && !selection.isCollapsed) {
       return;
     }
 
@@ -359,6 +388,7 @@ export function Block(props: {
         onDeactivate={onDeactivate}
         onEscalateSelectAll={onEscalateSelectAll}
         onExtendBlockSelection={onExtendBlockSelection}
+        onNavigateBlock={onNavigateBlock}
       />
     );
   }
@@ -366,10 +396,13 @@ export function Block(props: {
   if (text.trim() === "") {
     // A non-sole empty block is just a blank line — render a non-breaking space
     // so it keeps a full line's height (and stays clickable) without printing
-    // the invite text on every blank line.
+    // the invite text on every blank line. It has to be U+00A0 written as an
+    // escape, not a literal " ": a plain space collapses under white-space:
+    // normal, leaving the row only its 4px of padding tall, so blank lines
+    // rendered as slivers and everything below them sat too high.
     return (
       <div class="block block-empty" style={peerBorder} onClick={onActivate} onKeyDown={handleActivateKeyDown} tabIndex={0} role="button" title={peerLabel ?? t("block.clickToEdit")}>
-        {showEmptyPlaceholder ? t("block.clickToStart") : " "}
+        {showEmptyPlaceholder ? t("block.clickToStart") : "\u00a0"}
       </div>
     );
   }

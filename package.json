@@ -20,6 +20,7 @@
     "@codemirror/view": "^6.43.6",
     "@lezer/markdown": "^1.6.4",
     "@tik-choco/mistai": "github:tik-choco-lab/mistai",
+    "@tik-choco/mistlib": "0.6.0",
     "dompurify": "^3.2.4",
     "highlight.js": "^11.11.1",
     "katex": "^0.17.0",

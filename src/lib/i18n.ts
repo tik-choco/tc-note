@@ -106,6 +106,21 @@ const dict = {
   "noteList.unfiled": { ja: "未分類", en: "Unfiled" },
   "noteList.delete": { ja: "削除", en: "Delete" },
 
+  // Per-row sharing marker in the sidebar (see noteShareState) — the dot has
+  // no label of its own, so these carry the whole explanation.
+  "noteList.shareState.live": {
+    ja: "同時編集中（接続済み）",
+    en: "Editing together now (connected)",
+  },
+  "noteList.shareState.manual": {
+    ja: "共有中のノート（未接続）",
+    en: "Shared note (not connected)",
+  },
+  "noteList.shareState.folder": {
+    ja: "共有フォルダ内のノート",
+    en: "In a shared folder",
+  },
+
   "folderShare.status.idle": { ja: "このフォルダは共有中（未接続）", en: "This folder is shared (not connected)" },
   "folderShare.status.connecting": { ja: "接続中...", en: "Connecting..." },
   "folderShare.status.connected": { ja: "このフォルダは共有中（接続済み）", en: "This folder is shared (connected)" },
@@ -120,6 +135,16 @@ const dict = {
   "folderShare.joinSubmit": { ja: "このルームで共有", en: "Share with this room" },
   "folderShare.invalidRoomId": { ja: "ルームIDが正しくありません", en: "The room ID is invalid" },
   "folderShare.disableConfirm": { ja: "このフォルダの共有を解除しますか？", en: "Stop sharing this folder?" },
+  // Spells out the unit of sharing: a folder share covers the notes inside it,
+  // each in its own room, rather than merging them into one shared document.
+  "folderShare.explainShared": {
+    ja: "このフォルダのノートは、開くと自動的に共同編集になります（ノートごとに別のルーム）",
+    en: "Notes in this folder start collaborating when you open them — each in its own room",
+  },
+  "folderShare.explainIdle": {
+    ja: "共有すると、このフォルダのノートは開いたときに共同編集になります",
+    en: "Once shared, notes in this folder collaborate when you open them",
+  },
 
   "import.noContent": {
     ja: "インポートできる内容が見つかりませんでした",
@@ -154,6 +179,13 @@ const dict = {
   "collabButton.displayName": { ja: "表示名", en: "Display name" },
   "collabButton.cursorColor": { ja: "カーソルの色", en: "Cursor color" },
 
+  // The unit of sharing, stated where the user starts one — sharing follows
+  // the note, not the editor, so switching notes leaves the room.
+  "collabButton.explainNote": {
+    ja: "共有されるのは現在開いているノートだけです",
+    en: "Only the note you have open is shared",
+  },
+
   "collab.startSharing": { ja: "共有を開始", en: "Start sharing" },
 
   "sidebar.newNote": { ja: "新規ノート", en: "New note" },
@@ -168,7 +200,7 @@ const dict = {
     ja: "＋ ボタンから最初のノートを作成しましょう",
     en: "Create your first note with the + button",
   },
-  "sidebar.favorites": { ja: "★ お気に入り", en: "★ Favorites" },
+  "sidebar.favorites": { ja: "お気に入り", en: "Favorites" },
   "sidebar.notebooks": { ja: "ノートブック", en: "Notebooks" },
   "sidebar.addFolder": { ja: "フォルダを追加", en: "Add folder" },
   "sidebar.newFolderPlaceholder": { ja: "フォルダ名を入力してEnter", en: "Enter a folder name and press Enter" },
@@ -459,9 +491,6 @@ const dict = {
   "translatePopover.listen": { ja: "読み上げ", en: "Listen" },
 
   // --- note-article share (tc-chat handoff via the shared bus) ---
-  "editorToolbar.shareArticle": { ja: "tc-chatへ記事として共有", en: "Share to tc-chat as article" },
-  "app.articleShared": { ja: "tc-chatへ記事として共有しました", en: "Shared the note to tc-chat as an article" },
-  "app.articleShareFailed": { ja: "tc-chatへの共有に失敗しました", en: "Failed to share the note to tc-chat" },
   // --- end note-article share ---
 
   // --- shortcuts modal ---

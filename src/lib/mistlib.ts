@@ -30,8 +30,38 @@ export interface Folder {
   name: string;
   /** null = top-level folder */
   parentId: string | null;
-  /** Collab room id shared by every note in this folder; unset/null = not shared. */
+  /**
+   * Base id for the collab rooms every note in this folder joins (each note
+   * derives its own room from it — see deriveNoteRoomId); unset/null = not
+   * shared.
+   */
   roomId?: string | null;
+}
+
+/**
+ * How a note is shared, as the sidebar shows it:
+ *   - "live"   — the session is connected to this note's room right now.
+ *   - "manual" — the user shared this note explicitly (share button, invite
+ *                link, join-by-id) but isn't connected to it at the moment.
+ *   - "folder" — the note sits in a shared folder, so opening it starts
+ *                collaborating even though the note itself was never shared.
+ *   - "local"  — not shared at all.
+ * Ranked, not a set: a note can qualify for several at once and the most
+ * specific one wins, so a row never has to show two markers.
+ */
+export type NoteShareState = "live" | "manual" | "folder" | "local";
+
+export function noteShareState(
+  note: Pick<NoteMeta, "id" | "folderId">,
+  folders: Folder[],
+  manuallySharedNoteIds: ReadonlySet<string>,
+  connectedNoteId: string | null,
+): NoteShareState {
+  if (connectedNoteId === note.id) return "live";
+  if (manuallySharedNoteIds.has(note.id)) return "manual";
+  const folder = note.folderId ? folders.find((f) => f.id === note.folderId) : undefined;
+  if (folder?.roomId) return "folder";
+  return "local";
 }
 
 function loadIndex(): NoteMeta[] {
