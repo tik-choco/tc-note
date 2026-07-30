@@ -787,6 +787,9 @@ export function App() {
             onInsertAfter={blockActions.insertBlockAfter}
             onInsertBlocksAfter={blockActions.insertBlocksAfter}
             onFileTooLarge={(name) => showToast(t("blockEditor.fileTooLarge", { name }))}
+            onImagePasteProcessing={() => showToast(t("imagePaste.processing"))}
+            onImagePasteFailed={() => showToast(t("imagePaste.failed"))}
+            onImagePasteTooLarge={(name) => showToast(t("imagePaste.tooLarge", { name }))}
             onEscalateSelectAll={handleEscalateSelectAll}
             onExtendBlockSelection={handleExtendBlockSelection}
             onNavigateBlock={handleNavigateBlock}
