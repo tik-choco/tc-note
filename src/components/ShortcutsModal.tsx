@@ -48,6 +48,14 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    titleKey: "shortcutsModal.group.noteList",
+    rows: [
+      { labelKey: "shortcutsModal.noteRange", combo: ["Shift", "Click"] },
+      { labelKey: "shortcutsModal.noteToggle", combo: ["Mod", "Click"] },
+      { labelKey: "appSettings.shortcuts.deselect", combo: ["Esc"] },
+    ],
+  },
+  {
     titleKey: "shortcutsModal.group.editing",
     rows: [
       { labelKey: "shortcutsModal.slashMenu", combo: ["/"] },

@@ -4,12 +4,35 @@ import type { Folder, NoteMeta } from "../lib/mistlib";
 import type { CollabStatus } from "../lib/collab";
 import { isImeComposing, UNFILED } from "../lib/util";
 import { NoteList } from "./NoteList";
+import { NoteBulkBar } from "./NoteBulkBar";
 import { FolderShareButton } from "./FolderShareButton";
+import type { NoteSelection } from "../hooks/useNoteSelection";
 import { useT } from "../hooks/useAppSettings";
 import { useSidebarWidth, SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX } from "../hooks/useSidebarWidth";
 import { Icon } from "./Icon";
 
 const SIDEBAR_WIDTH_KEYBOARD_STEP = 16;
+
+/** Note ids carried by a sidebar drag. A drag that started on a multi-selected
+ * row adds `text/tc-note-ids` (a JSON array) next to the single-note
+ * `text/tc-note-id` it always sets — see NoteList's onDragStart. Anything
+ * unparsable falls back to the single id rather than dropping the drag. */
+function readDraggedNoteIds(dataTransfer: DataTransfer | null): string[] {
+  const single = dataTransfer?.getData("text/tc-note-id") ?? "";
+  const many = dataTransfer?.getData("text/tc-note-ids");
+  if (many) {
+    try {
+      const parsed = JSON.parse(many) as unknown;
+      if (Array.isArray(parsed)) {
+        const ids = parsed.filter((id): id is string => typeof id === "string" && id.length > 0);
+        if (ids.length > 0) return ids;
+      }
+    } catch {
+      // fall through to the single-note id
+    }
+  }
+  return single ? [single] : [];
+}
 
 export function Sidebar(props: {
   open: boolean;
@@ -57,6 +80,16 @@ export function Sidebar(props: {
   onDeleteNote: (id: string, name: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onToggleFavorite: (id: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onMoveFolder: (id: string, folderId: string | null) => void;
+
+  /** Shift/Ctrl+click multi-selection across every list below (see
+   * hooks/useNoteSelection). Two or more selected rows raise the bulk bar. */
+  selection: NoteSelection;
+  /** True when every selected note is already a favorite — flips the bulk
+   * star action to "remove from favorites". */
+  selectionAllFavorite: boolean;
+  onBulkMoveFolder: (ids: string[], folderId: string | null) => void;
+  onBulkToggleFavorite: (ids: string[]) => void;
+  onBulkDelete: (ids: string[]) => void;
 }) {
   const {
     open,
@@ -92,6 +125,11 @@ export function Sidebar(props: {
     onDeleteNote,
     onToggleFavorite,
     onMoveFolder,
+    selection,
+    selectionAllFavorite,
+    onBulkMoveFolder,
+    onBulkToggleFavorite,
+    onBulkDelete,
   } = props;
 
   const t = useT();
@@ -159,8 +197,8 @@ export function Sidebar(props: {
       onDrop: (e: JSX.TargetedDragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setDragOverTarget(null);
-        const noteId = e.dataTransfer?.getData("text/tc-note-id");
-        if (noteId) onMoveFolder(noteId, targetFolderId);
+        const ids = readDraggedNoteIds(e.dataTransfer);
+        if (ids.length > 0) onBulkMoveFolder(ids, targetFolderId);
       },
     };
   }
@@ -247,11 +285,13 @@ export function Sidebar(props: {
               {t("sidebar.favorites")}
             </h3>
             <NoteList
+              listId="favorites"
               notes={favorites}
               folders={folders}
               activeId={activeId}
               manuallySharedNoteIds={manuallySharedNoteIds}
               connectedNoteId={connectedNoteId}
+              selection={selection}
               onSelect={onSelectNote}
               onDelete={onDeleteNote}
               onToggleFavorite={onToggleFavorite}
@@ -346,11 +386,13 @@ export function Sidebar(props: {
                 </div>
                 {expanded && (
                   <NoteList
+                    listId={`folder:${folder.id}`}
                     notes={notesHere}
                     folders={folders}
                     activeId={activeId}
                     manuallySharedNoteIds={manuallySharedNoteIds}
                     connectedNoteId={connectedNoteId}
+                    selection={selection}
                     onSelect={onSelectNote}
                     onDelete={onDeleteNote}
                     onToggleFavorite={onToggleFavorite}
@@ -382,11 +424,13 @@ export function Sidebar(props: {
             </button>
           </div>
           <NoteList
+            listId="unfiled"
             notes={unfiledNotes}
             folders={folders}
             activeId={activeId}
             manuallySharedNoteIds={manuallySharedNoteIds}
             connectedNoteId={connectedNoteId}
+            selection={selection}
             onSelect={onSelectNote}
             onDelete={onDeleteNote}
             onToggleFavorite={onToggleFavorite}
@@ -394,6 +438,20 @@ export function Sidebar(props: {
           />
         </div>
       </div>
+
+      {/* Only a *multi*-selection raises the bar: one selected row is just the
+          note you opened, and the per-row controls already cover it. */}
+      {selection.count > 1 && (
+        <NoteBulkBar
+          count={selection.count}
+          folders={folders}
+          allFavorite={selectionAllFavorite}
+          onMoveFolder={(folderId) => onBulkMoveFolder([...selection.selectedIds], folderId)}
+          onToggleFavorite={() => onBulkToggleFavorite([...selection.selectedIds])}
+          onDelete={() => onBulkDelete([...selection.selectedIds])}
+          onClear={selection.clear}
+        />
+      )}
       </aside>
       {/* Sibling of <aside>, not a child — the sidebar has overflow:hidden
           (needed for the collapse-width transition to clip cleanly), which

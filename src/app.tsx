@@ -9,6 +9,7 @@ import {
   restoreFolder,
   restoreNote,
   setFolderRoom,
+  setNoteFavorite,
   setNoteFolder,
   toggleFavorite,
   type Folder,
@@ -25,6 +26,7 @@ import { readShared, subscribeShared } from "./lib/sharedBus";
 import { schedulePublishNoteDocIndex } from "./lib/noteDocExport";
 import { createBlockActions } from "./lib/blockActions";
 import { useNoteSession } from "./hooks/useNoteSession";
+import { useNoteSelection } from "./hooks/useNoteSelection";
 import { useNoteUrlSync } from "./hooks/useNoteUrlSync";
 import { useToast } from "./hooks/useToast";
 import { useCollab } from "./hooks/useCollab";
@@ -342,6 +344,14 @@ export function App() {
   const favorites = searched.filter((n) => n.favorite);
   const unfiledNotes = searched.filter((n) => n.folderId === null);
 
+  // Sidebar multi-selection (Shift/Ctrl+click on note rows). It lives here,
+  // not in Sidebar, because the bulk actions it enables are the same note
+  // mutations the single-note handlers above already own.
+  const existingNoteIds = useMemo(() => new Set(notes.map((n) => n.id)), [notes]);
+  const noteSelection = useNoteSelection(existingNoteIds);
+  const selectedNotes = notes.filter((n) => noteSelection.selectedIds.has(n.id));
+  const selectionAllFavorite = selectedNotes.length > 0 && selectedNotes.every((n) => n.favorite);
+
   function notesInFolder(folderId: string): NoteMeta[] {
     return searched.filter((n) => n.folderId === folderId);
   }
@@ -387,8 +397,60 @@ export function App() {
     });
   }
 
+  // One code path for "move note(s) into a folder": the row menu passes a
+  // single id, a drag or the bulk bar can pass many. Only a real bulk move
+  // announces itself with an undo toast — moving one note by hand is
+  // self-evident, and reversible with the same menu that did it.
+  function handleBulkMoveFolder(ids: string[], folderId: string | null) {
+    if (ids.length === 0) return;
+    const previous = ids.map(
+      (id) => [id, notes.find((n) => n.id === id)?.folderId ?? null] as const,
+    );
+    let index = notes;
+    for (const id of ids) index = setNoteFolder(id, folderId);
+    setNotes(index.slice().sort((a, b) => b.updatedAt - a.updatedAt));
+    if (ids.length === 1) return;
+    noteSelection.clear();
+    showToast(t("app.notesMoved", { count: ids.length }), () => {
+      previous.forEach(([id, prevFolderId]) => setNoteFolder(id, prevFolderId));
+      setNotes(listNotes());
+    });
+  }
+
   function handleMoveFolder(id: string, folderId: string | null) {
-    setNotes(setNoteFolder(id, folderId).sort((a, b) => b.updatedAt - a.updatedAt));
+    handleBulkMoveFolder([id], folderId);
+  }
+
+  function handleBulkDelete(ids: string[]) {
+    // Capture the metadata before deleting: mistlib never removes the blobs,
+    // so undo only has to put these index entries back (same trick as the
+    // single-note delete below).
+    const metas = notes.filter((n) => ids.includes(n.id));
+    if (metas.length === 0) return;
+    metas.forEach((meta) => deleteNote(meta.id));
+    setNotes(listNotes());
+    schedulePublishNoteDocIndex();
+    if (metas.some((meta) => meta.id === activeId)) session.startNewNote();
+    noteSelection.clear();
+
+    showToast(t("app.notesDeleted", { count: metas.length }), () => {
+      metas.forEach((meta) => restoreNote(meta));
+      setNotes(listNotes());
+      schedulePublishNoteDocIndex();
+    });
+  }
+
+  // Drives the whole selection to one state rather than flipping each note:
+  // a mixed selection favorites everything (the additive reading), and only an
+  // all-favorites selection un-favorites. The selection deliberately survives,
+  // so the user can keep acting on the same notes.
+  function handleBulkToggleFavorite(ids: string[]) {
+    const selected = notes.filter((n) => ids.includes(n.id));
+    if (selected.length === 0) return;
+    const favorite = !selected.every((n) => n.favorite);
+    let index = notes;
+    for (const note of selected) index = setNoteFavorite(note.id, favorite);
+    setNotes(index.slice().sort((a, b) => b.updatedAt - a.updatedAt));
   }
 
   function handleSetFolderRoom(folderId: string, roomId: string | null, isNew: boolean) {
@@ -415,7 +477,9 @@ export function App() {
 
   function handleToggleFavorite(id: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
-    setNotes(toggleFavorite(id));
+    // Sorted like every other note-list update — the stored index is in save
+    // order, so handing it over raw would shuffle the sidebar on a star click.
+    setNotes(toggleFavorite(id).slice().sort((a, b) => b.updatedAt - a.updatedAt));
   }
 
   // Restoring a past version goes through the exact same setters a normal
@@ -738,6 +802,11 @@ export function App() {
         onDeleteNote={handleDelete}
         onToggleFavorite={handleToggleFavorite}
         onMoveFolder={handleMoveFolder}
+        selection={noteSelection}
+        selectionAllFavorite={selectionAllFavorite}
+        onBulkMoveFolder={handleBulkMoveFolder}
+        onBulkToggleFavorite={handleBulkToggleFavorite}
+        onBulkDelete={handleBulkDelete}
       />
 
       {/* Scrim behind the mobile overlay sidebar — display:none above 768px

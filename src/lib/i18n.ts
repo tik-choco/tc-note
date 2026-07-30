@@ -106,6 +106,23 @@ const dict = {
   "noteList.unfiled": { ja: "未分類", en: "Unfiled" },
   "noteList.delete": { ja: "削除", en: "Delete" },
 
+  // Sidebar multi-selection (Shift/Ctrl+click) and its bulk action bar.
+  "noteList.selectedCount": {
+    ja: (params) => `${params.count}件選択中`,
+    en: (params) => `${params.count} selected`,
+  },
+  "noteList.bulk.move": { ja: "選択したノートを移動", en: "Move selected notes" },
+  "noteList.bulk.favorite": {
+    ja: "選択したノートをお気に入りに追加",
+    en: "Add selected notes to favorites",
+  },
+  "noteList.bulk.unfavorite": {
+    ja: "選択したノートをお気に入りから外す",
+    en: "Remove selected notes from favorites",
+  },
+  "noteList.bulk.delete": { ja: "選択したノートを削除", en: "Delete selected notes" },
+  "noteList.bulk.clear": { ja: "選択を解除", en: "Clear selection" },
+
   // Per-row sharing marker in the sidebar (see noteShareState) — the dot has
   // no label of its own, so these carry the whole explanation.
   "noteList.shareState.live": {
@@ -462,6 +479,14 @@ const dict = {
     ja: (params) => `「${params.name}」を削除しました`,
     en: (params) => `Deleted "${params.name}"`,
   },
+  "app.notesDeleted": {
+    ja: (params) => `${params.count}件のノートを削除しました`,
+    en: (params) => `Deleted ${params.count} notes`,
+  },
+  "app.notesMoved": {
+    ja: (params) => `${params.count}件のノートを移動しました`,
+    en: (params) => `Moved ${params.count} notes`,
+  },
   "app.notesImported": {
     ja: (params) => `${params.count}件のノートを作成しました`,
     en: (params) => `Created ${params.count} note(s)`,
@@ -499,6 +524,9 @@ const dict = {
   "shortcutsModal.group.global": { ja: "全般", en: "Global" },
   "shortcutsModal.group.blocks": { ja: "ブロック選択", en: "Blocks" },
   "shortcutsModal.group.editing": { ja: "編集", en: "Editing" },
+  "shortcutsModal.group.noteList": { ja: "ノート一覧", en: "Note list" },
+  "shortcutsModal.noteRange": { ja: "ノートを範囲選択", en: "Select a range of notes" },
+  "shortcutsModal.noteToggle": { ja: "ノートを選択に追加/解除", en: "Add or remove one note" },
   "shortcutsModal.globalSearch": { ja: "全文検索", en: "Full-text search" },
   "shortcutsModal.toggle": { ja: "このショートカット一覧を表示", en: "Show this shortcuts list" },
   "shortcutsModal.shiftClick": { ja: "クリックで選択範囲を拡張", en: "Extend selection by clicking" },

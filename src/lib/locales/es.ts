@@ -81,6 +81,12 @@ export const es: Record<TranslationKey, Entry> = {
   "noteList.moveToFolder": "Mover a una carpeta",
   "noteList.unfiled": "Sin clasificar",
   "noteList.delete": "Eliminar",
+  "noteList.selectedCount": (params) => `${params.count} seleccionadas`,
+  "noteList.bulk.move": "Mover las notas seleccionadas",
+  "noteList.bulk.favorite": "Añadir las notas seleccionadas a favoritos",
+  "noteList.bulk.unfavorite": "Quitar las notas seleccionadas de favoritos",
+  "noteList.bulk.delete": "Eliminar las notas seleccionadas",
+  "noteList.bulk.clear": "Borrar la selección",
   "noteList.shareState.live": "Edición conjunta en curso (conectada)",
   "noteList.shareState.manual": "Nota compartida (sin conexión)",
   "noteList.shareState.folder": "Nota en una carpeta compartida",
@@ -295,6 +301,8 @@ export const es: Record<TranslationKey, Entry> = {
     }`,
   "app.folderDeleted": (params) => `Se eliminó la carpeta «${params.name}»`,
   "app.noteDeleted": (params) => `Se eliminó «${params.name}»`,
+  "app.notesDeleted": (params) => `Se eliminaron ${params.count} notas`,
+  "app.notesMoved": (params) => `Se movieron ${params.count} notas`,
   "app.notesImported": (params) =>
     `Se ${Number(params.count) === 1 ? "creó" : "crearon"} ${params.count} ${
       Number(params.count) === 1 ? "nota" : "notas"
@@ -334,6 +342,9 @@ export const es: Record<TranslationKey, Entry> = {
   "shortcutsModal.group.global": "General",
   "shortcutsModal.group.blocks": "Selección de bloques",
   "shortcutsModal.group.editing": "Edición",
+  "shortcutsModal.group.noteList": "Lista de notas",
+  "shortcutsModal.noteRange": "Seleccionar un rango de notas",
+  "shortcutsModal.noteToggle": "Añadir o quitar una nota",
   "shortcutsModal.globalSearch": "Búsqueda de texto completo",
   "shortcutsModal.toggle": "Mostrar esta lista de atajos",
   "shortcutsModal.shiftClick": "Ampliar la selección al hacer clic",
