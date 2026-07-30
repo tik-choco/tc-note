@@ -15,6 +15,7 @@
 @import "./styles/llm-network.css";
 @import "./styles/llm-tasks.css";
 @import "./styles/review-panel.css";
+@import "./styles/history-panel.css";
 @import "./styles/app-settings.css";
 @import "./styles/settings.css";
 @import "./styles/global-search.css";
