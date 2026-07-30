@@ -15,7 +15,7 @@ import {
   type NoteMeta,
 } from "./lib/mistlib";
 import { extractOutline } from "./lib/outline";
-import { joinBlocks } from "./lib/blocks";
+import { joinBlocks, splitBlocks } from "./lib/blocks";
 import { collectBibliography } from "./lib/bibtex";
 import { isImeComposing, isNarrowScreen } from "./lib/util";
 import { importDocument } from "./lib/importDocument";
@@ -40,6 +40,7 @@ import { Toast } from "./components/Toast";
 import { SettingsModal } from "./components/SettingsModal";
 import { LlmChatPanel } from "./components/LlmChatPanel";
 import { ReviewPanel } from "./components/ReviewPanel";
+import { HistoryPanel } from "./components/HistoryPanel";
 import { GlobalSearchModal } from "./components/GlobalSearchModal";
 import { TranslateHoverLayer } from "./components/TranslateHoverLayer";
 import { ShortcutsModal } from "./components/ShortcutsModal";
@@ -77,6 +78,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(() => shouldShowOnboarding());
 
   // Settings' "show the setup guide again" button lives deep in the modal
@@ -90,19 +92,36 @@ export function App() {
     setOnboardingOpen(false);
   }
 
-  // The chat and review panels both dock to the same right-edge slot, so
-  // opening one closes the other rather than stacking two panels visually.
+  // The chat, review, and history panels all dock to the same right-edge
+  // slot, so opening one closes the others rather than stacking panels
+  // visually.
   function handleToggleChat() {
     setChatOpen((v) => {
       const next = !v;
-      if (next) setReviewOpen(false);
+      if (next) {
+        setReviewOpen(false);
+        setHistoryOpen(false);
+      }
       return next;
     });
   }
   function handleToggleReview() {
     setReviewOpen((v) => {
       const next = !v;
-      if (next) setChatOpen(false);
+      if (next) {
+        setChatOpen(false);
+        setHistoryOpen(false);
+      }
+      return next;
+    });
+  }
+  function handleToggleHistory() {
+    setHistoryOpen((v) => {
+      const next = !v;
+      if (next) {
+        setChatOpen(false);
+        setReviewOpen(false);
+      }
       return next;
     });
   }
@@ -397,6 +416,24 @@ export function App() {
   function handleToggleFavorite(id: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     setNotes(toggleFavorite(id));
+  }
+
+  // Restoring a past version goes through the exact same setters a normal
+  // edit uses (session.setContent/setBlocksSnapshot) rather than writing
+  // straight to storage — so the change marks the session dirty, autosave
+  // persists it as a brand-new version (making the restore itself
+  // undoable via history), and — when a collab room is live — useCollab's
+  // local-to-Yjs mirror effect (keyed off this same blocksSnapshot/title
+  // state) picks it up and broadcasts it to peers exactly like any other
+  // local edit. Nothing here needs to special-case the collab session.
+  function handleRestoreVersion(markdown: string) {
+    session.setBlocksSnapshot(splitBlocks(markdown));
+    session.setContent(markdown);
+    showToast(t("history.restored"));
+  }
+
+  function handleRestoreVersionFailed() {
+    showToast(t("history.restoreFailed"));
   }
 
   // On narrow screens the sidebar overlays the editor, so opening or creating
@@ -729,6 +766,8 @@ export function App() {
           onToggleChat={handleToggleChat}
           reviewOpen={reviewOpen}
           onToggleReview={handleToggleReview}
+          historyOpen={historyOpen}
+          onToggleHistory={handleToggleHistory}
         />
 
         <div class="content-area" onClick={handleCanvasClick}>
@@ -823,6 +862,16 @@ export function App() {
           noteText={content}
           language={language}
           onClose={() => setReviewOpen(false)}
+        />
+      )}
+
+      {historyOpen && (
+        <HistoryPanel
+          noteId={activeId}
+          status={session.status}
+          onClose={() => setHistoryOpen(false)}
+          onRestore={handleRestoreVersion}
+          onRestoreFailed={handleRestoreVersionFailed}
         />
       )}
 

@@ -1,0 +1,203 @@
+/* "History" panel: a fixed drawer on the right edge, above the editor.
+   Toggled from the editor toolbar. Structurally mirrors review-panel.css's
+   panel/header conventions (which itself mirrors llm-chat.css). */
+
+.history-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 92vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-3);
+  z-index: var(--z-modal);
+  animation: tc-history-slide-in var(--dur-med) var(--ease-out);
+}
+
+@keyframes tc-history-slide-in {
+  from {
+    transform: translateX(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.history-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.history-panel-title {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+}
+
+.history-panel-count {
+  font-size: 12px;
+  color: var(--text-subtle);
+  margin-left: auto;
+  margin-right: var(--space-2);
+}
+
+.history-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.history-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.history-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.history-item-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.history-item-row:hover {
+  background: var(--surface-hover);
+}
+
+.history-item-row--selected {
+  background: var(--accent-bg);
+}
+
+.history-item-icon {
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.history-item-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.history-item-current {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.history-item-chars {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.history-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.history-preview-label {
+  margin-top: var(--space-3);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-subtle);
+}
+
+.history-preview-status {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.history-preview-error {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.history-preview-text {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+
+/* Same quiet secondary-action treatment as review-run-btn — not a loud
+   filled CTA, per the app's minimal design language. */
+.history-restore-btn {
+  align-self: flex-start;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-h);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.history-restore-btn:not(:disabled):hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.history-restore-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
