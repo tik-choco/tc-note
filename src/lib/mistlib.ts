@@ -9,6 +9,7 @@
 
 import { storage_add, storage_get } from "../vendor/mistlib/wrappers/web/index.js";
 import { ensureMistNode } from "./mistNode";
+import { clearHistory, recordVersion } from "./noteHistory";
 
 const INDEX_KEY = "tc-note:index";
 const FOLDERS_KEY = "tc-note:folders";
@@ -142,6 +143,15 @@ export async function saveNote(id: string, title: string, markdown: string): Pro
     index.push(meta);
   }
   saveIndex(index);
+  // Every storage_add above already wrote an immutable, content-addressed
+  // blob — recordVersion just keeps a pointer to it so it stays reachable
+  // (see noteHistory.ts). Best-effort: a failure here must never break the
+  // save itself.
+  try {
+    recordVersion(id, cid, markdown.length);
+  } catch (err) {
+    console.warn("mistlib: failed to record version history", err);
+  }
   return meta;
 }
 
@@ -157,6 +167,11 @@ export async function loadNote(id: string): Promise<string> {
 
 export function deleteNote(id: string) {
   saveIndex(loadIndex().filter((n) => n.id !== id));
+  try {
+    clearHistory(id);
+  } catch (err) {
+    console.warn("mistlib: failed to clear version history", err);
+  }
 }
 
 // Re-inserts a previously deleted note (used by the undo toast). The blob
