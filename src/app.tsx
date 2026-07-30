@@ -892,6 +892,7 @@ export function App() {
           onSetProviderModeEnabled={llmSettings.setProviderModeEnabled}
           onSetNetworkRoomId={llmSettings.setNetworkRoomId}
           net={llmNet}
+          showToast={showToast}
           onClose={() => setSettingsOpen(false)}
         />
       )}

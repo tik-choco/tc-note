@@ -1,7 +1,5 @@
 import { useRef, useState } from "preact/hooks";
 import { useAppSettings, useT } from "../hooks/useAppSettings";
-import { useToast } from "../hooks/useToast";
-import { Toast } from "./Toast";
 import { LANGUAGES, type Language } from "../lib/appSettings";
 import type { TranslationKey } from "../lib/i18n";
 import { requestOnboarding } from "../lib/onboarding";
@@ -9,7 +7,7 @@ import { applyBackup, buildBackup, parseBackup } from "../lib/noteBackup";
 
 // How long to leave the "imported" toast on screen before reloading, so the
 // user actually gets to read it instead of the reload cutting it off
-// instantly. Well under useToast's own auto-dismiss timer.
+// instantly. Well under the toast's own auto-dismiss timer.
 const IMPORT_RELOAD_DELAY_MS = 1200;
 
 function backupFileName(): string {
@@ -47,16 +45,18 @@ const SHORTCUTS: [TranslationKey, string][] = [
 // is toggled from the editor toolbar, not here — see EditorToolbar.
 // Rendered as the "Display" tab inside SettingsModal — no dialog chrome of its
 // own; the surrounding modal owns the overlay, header, and focus management.
-export function AppSettingsPanel({ onClose }: { onClose: () => void }) {
+export function AppSettingsPanel({
+  onClose,
+  showToast,
+}: {
+  onClose: () => void;
+  /** The App root's toast queue — .toast-stack sits at --z-toast, above the
+   * modal's --z-modal, so backup feedback is visible over the open dialog. */
+  showToast: (message: string) => void;
+}) {
   const { language, setLanguage } = useAppSettings();
   const t = useT();
 
-  // AppSettingsPanel only receives `onClose` from SettingsModal (no
-  // app-level showToast is threaded down this far), so backup export/import
-  // feedback uses its own local toast instance rather than the one at the
-  // App root — same look (Toast reuses the shared .toast-stack styling), just
-  // a separate queue scoped to this panel.
-  const { toasts, showToast, dismissToast } = useToast();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -181,8 +181,6 @@ export function AppSettingsPanel({ onClose }: { onClose: () => void }) {
           }}
         />
       </div>
-
-      <Toast toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }
