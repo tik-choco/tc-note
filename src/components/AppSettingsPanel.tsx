@@ -162,12 +162,14 @@ export function AppSettingsPanel({
       <div class="app-settings-section">
         <span class="app-settings-label">{t("backup.section")}</span>
         <p class="llm-settings-hint">{t("backup.description")}</p>
-        <button type="button" onClick={handleExport} disabled={exporting}>
-          {exporting ? t("backup.exporting") : t("backup.export")}
-        </button>
-        <button type="button" onClick={() => importInputRef.current?.click()} disabled={importing}>
-          {importing ? t("backup.importing") : t("backup.import")}
-        </button>
+        <div class="app-settings-actions">
+          <button type="button" onClick={handleExport} disabled={exporting}>
+            {exporting ? t("backup.exporting") : t("backup.export")}
+          </button>
+          <button type="button" onClick={() => importInputRef.current?.click()} disabled={importing}>
+            {importing ? t("backup.importing") : t("backup.import")}
+          </button>
+        </div>
         <input
           ref={importInputRef}
           type="file"

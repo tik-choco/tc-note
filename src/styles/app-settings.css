@@ -68,6 +68,15 @@
   gap: var(--space-1);
 }
 
+/* Sibling actions on one line (export/import) — the section itself is a
+   column, so two related buttons would otherwise stack and read as separate
+   steps rather than a pair. */
+.app-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 /* Dropdown for choices with many options (e.g. the UI language) — scales past
    what a horizontal segmented control can hold. Recessed surface-2 field with
    an accent focus ring, matching tc-town's field styling. */
@@ -121,11 +130,13 @@
   white-space: nowrap;
 }
 
-/* Bare <button> inside a section card (currently just the "reopen onboarding"
-   button) — tc-town's pill button language, matching the primary/accent pill
-   previously provided by llm-settings.css's `.llm-settings-section > button`
-   rule before AppSettingsPanel stopped depending on that stylesheet. */
-.app-settings-section > button {
+/* Bare <button> inside a section card (the "reopen onboarding" button, and the
+   backup export/import pair inside .app-settings-actions) — tc-town's pill
+   button language, matching the primary/accent pill previously provided by
+   llm-settings.css's `.llm-settings-section > button` rule before
+   AppSettingsPanel stopped depending on that stylesheet. */
+.app-settings-section > button,
+.app-settings-actions > button {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
@@ -144,11 +155,22 @@
     box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
-.app-settings-section > button:hover {
+.app-settings-section > button:hover:not(:disabled),
+.app-settings-actions > button:hover:not(:disabled) {
   background: var(--accent-bg-strong);
   box-shadow: var(--shadow-1);
 }
 
-.app-settings-section > button:active {
+.app-settings-section > button:active:not(:disabled),
+.app-settings-actions > button:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+/* Export/import disable themselves while running (see AppSettingsPanel), so
+   the pill needs a visibly inert state — otherwise a click during a long
+   export looks like it simply did nothing. */
+.app-settings-section > button:disabled,
+.app-settings-actions > button:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
