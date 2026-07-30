@@ -33,6 +33,8 @@ export type SettingsModalProps = {
   onSetNetworkRoomId: (roomId: string) => void;
   /** Live AI Network state, for the shared status UI in the Network tab — its networkAvailable/networkSource already account for whether a collab room is joined. */
   net: UseLlmNetResult;
+  /** App-root toast queue, forwarded to the Display tab's backup section. */
+  showToast: (message: string) => void;
   onClose: () => void;
   initialTab?: SettingsTab;
 };
@@ -164,7 +166,7 @@ export function SettingsModal(props: SettingsModalProps) {
           id="settings-panel"
           aria-labelledby={`settings-tab-${activeTab}`}
         >
-          {activeTab === "display" && <AppSettingsPanel onClose={onClose} />}
+          {activeTab === "display" && <AppSettingsPanel onClose={onClose} showToast={props.showToast} />}
           {activeTab === "connection" && (
             <LlmConnectionPanel
               settings={settings}
