@@ -27,6 +27,8 @@ export function EditorToolbar(props: {
   onToggleChat: () => void;
   reviewOpen: boolean;
   onToggleReview: () => void;
+  historyOpen: boolean;
+  onToggleHistory: () => void;
 }) {
   const {
     sidebarOpen,
@@ -49,6 +51,8 @@ export function EditorToolbar(props: {
     onToggleChat,
     reviewOpen,
     onToggleReview,
+    historyOpen,
+    onToggleHistory,
   } = props;
   const t = useT();
   const { resolvedTheme, setTheme } = useAppSettings();
@@ -130,6 +134,16 @@ export function EditorToolbar(props: {
         aria-pressed={reviewOpen}
       >
         <Icon name="rubric" />
+      </button>
+      <button
+        type="button"
+        class={`icon-btn ${historyOpen ? "icon-btn--active" : ""}`}
+        onClick={onToggleHistory}
+        title={t("history.open")}
+        aria-label={t("history.open")}
+        aria-pressed={historyOpen}
+      >
+        <Icon name="history" />
       </button>
       <button
         type="button"
