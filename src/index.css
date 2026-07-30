@@ -1,3 +1,5 @@
+@import "./styles/pwa.css";
+
 :root {
   /* ---------------------------------------------------------------
      Design tokens — modernized to match the tc-vrm-viewer design
