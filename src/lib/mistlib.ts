@@ -192,6 +192,17 @@ export function toggleFavorite(id: string): NoteMeta[] {
   return index;
 }
 
+// Explicit set rather than toggle — a bulk "favorite these 5 notes" action
+// has to drive every note to the *same* state, which repeated toggles can't do
+// when the selection is mixed.
+export function setNoteFavorite(id: string, favorite: boolean): NoteMeta[] {
+  const index = loadIndex();
+  const meta = index.find((n) => n.id === id);
+  if (meta) meta.favorite = favorite;
+  saveIndex(index);
+  return index;
+}
+
 export function setNoteFolder(id: string, folderId: string | null): NoteMeta[] {
   const index = loadIndex();
   const meta = index.find((n) => n.id === id);

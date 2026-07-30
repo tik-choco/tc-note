@@ -1,13 +1,18 @@
-import { useRef, useState } from "preact/hooks";
+import { useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "preact";
 import { noteShareState, type Folder, type NoteMeta, type NoteShareState } from "../lib/mistlib";
 import type { Language } from "../lib/appSettings";
 import { formatRelativeTime, formatTime } from "../lib/util";
 import { useAppSettings, useT } from "../hooks/useAppSettings";
 import { usePopoverDismiss } from "../hooks/usePopoverDismiss";
+import type { NoteSelection } from "../hooks/useNoteSelection";
 import { Icon } from "./Icon";
 
 export function NoteList(props: {
+  /** Identifies this list among the sidebar's several (favorites, one per
+   * folder, unfiled) so Shift+click measures its range within one of them —
+   * see lib/noteSelection.ts. */
+  listId: string;
   notes: NoteMeta[];
   folders: Folder[];
   activeId: string;
@@ -15,17 +20,20 @@ export function NoteList(props: {
   manuallySharedNoteIds: ReadonlySet<string>;
   /** The note whose room the collab session is connected to right now, if any. */
   connectedNoteId: string | null;
+  selection: NoteSelection;
   onSelect: (id: string) => void;
   onDelete: (id: string, name: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onToggleFavorite: (id: string, e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   onMoveFolder: (id: string, folderId: string | null) => void;
 }) {
   const {
+    listId,
     notes,
     folders,
     activeId,
     manuallySharedNoteIds,
     connectedNoteId,
+    selection,
     onSelect,
     onDelete,
     onToggleFavorite,
@@ -33,6 +41,10 @@ export function NoteList(props: {
   } = props;
   const t = useT();
   const { language } = useAppSettings();
+  // The display order a Shift+click range is sliced from. Computed once per
+  // render rather than per row — every row hands the same array back to the
+  // selection reducer on click.
+  const orderedIds = useMemo(() => notes.map((n) => n.id), [notes]);
   if (notes.length === 0) {
     return <p class="note-list-empty">{t("noteList.empty")}</p>;
   }
@@ -44,6 +56,10 @@ export function NoteList(props: {
           note={n}
           folders={folders}
           active={n.id === activeId}
+          selected={selection.selectedIds.has(n.id)}
+          listId={listId}
+          orderedIds={orderedIds}
+          selection={selection}
           shareState={noteShareState(n, folders, manuallySharedNoteIds, connectedNoteId)}
           language={language}
           t={t}
@@ -64,6 +80,10 @@ function NoteRow(props: {
   note: NoteMeta;
   folders: Folder[];
   active: boolean;
+  selected: boolean;
+  listId: string;
+  orderedIds: readonly string[];
+  selection: NoteSelection;
   shareState: NoteShareState;
   language: Language;
   t: (key: Parameters<ReturnType<typeof useT>>[0], params?: Record<string, string | number>) => string;
@@ -76,6 +96,10 @@ function NoteRow(props: {
     note: n,
     folders,
     active,
+    selected,
+    listId,
+    orderedIds,
+    selection,
     shareState,
     language,
     t,
@@ -132,20 +156,39 @@ function NoteRow(props: {
     onDelete(n.id, n.title, e);
   }
 
+  // Row-level click is the single entry point for selection: a plain click
+  // still opens the note, Shift extends a range and Ctrl/Cmd toggles this row
+  // (neither opens anything — see lib/noteSelection.ts).
+  function handleRowClick(e: JSX.TargetedMouseEvent<HTMLElement>) {
+    if (selection.onRowClick(listId, orderedIds, n.id, e)) onSelect(n.id);
+  }
+
   const currentFolderId = n.folderId ?? null;
 
   return (
     <li
       key={n.id}
-      class={active ? "active" : ""}
+      class={`${active ? "active" : ""} ${selected ? "is-selected" : ""}`}
       draggable
       onDragStart={(e) => {
-        e.dataTransfer?.setData("text/tc-note-id", n.id);
-        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+        if (!e.dataTransfer) return;
+        // Always advertise the single dragged note, so drop targets that only
+        // know the original one-note contract keep working; a drag that picks
+        // up a whole selection adds the full list alongside it.
+        e.dataTransfer.setData("text/tc-note-id", n.id);
+        const ids = selection.dragIds(n.id);
+        if (ids.length > 1) e.dataTransfer.setData("text/tc-note-ids", JSON.stringify(ids));
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      // Shift+click would otherwise start a native text-selection sweep across
+      // the sidebar; the row is a click target, so there's nothing to lose by
+      // suppressing it (unmodified clicks keep their default behavior).
+      onMouseDown={(e) => {
+        if (e.shiftKey) e.preventDefault();
       }}
       // Row-level click keeps the whole row (padding, gaps between the
       // controls) opening the note as before; the controls stopPropagation.
-      onClick={() => onSelect(n.id)}
+      onClick={handleRowClick}
       onContextMenu={handleContextMenu}
     >
       <button
@@ -157,11 +200,14 @@ function NoteRow(props: {
       >
         <Icon name={n.favorite ? "star" : "star-outline"} size={15} />
       </button>
-      {/* A real button so notes open from the keyboard. */}
+      {/* A real button so notes open from the keyboard. It deliberately has no
+          click handler of its own: Enter/Space on a button dispatches a click
+          that bubbles to the row, so one handler covers both, and a mouse
+          click can't be counted twice (which would toggle Ctrl+click's
+          selection straight back off). */}
       <button
         type="button"
         class="note-summary"
-        onClick={() => onSelect(n.id)}
         aria-current={active ? "true" : undefined}
       >
         <span class="note-title-row">

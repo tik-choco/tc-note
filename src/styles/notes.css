@@ -294,6 +294,19 @@
   color: var(--accent);
 }
 
+/* A row caught in a multi-selection (Shift/Ctrl+click). Deliberately a ring
+   rather than another fill: several rows can be selected while exactly one is
+   open, so "selected" has to read as a distinct state next to .active — and
+   stay legible on top of it when the open note is part of the selection. */
+.note-list li.is-selected {
+  background: var(--accent-bg);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+
+.note-list li.is-selected:hover {
+  background: var(--accent-bg);
+}
+
 /* Active row marker: a short accent bar on the leading edge. Reads as
    "you are here" at a glance even where the background tint is subtle
    (bright displays, light theme). */
@@ -562,6 +575,84 @@
 
 .note-more-item--danger:hover {
   background: var(--danger-bg);
+}
+
+/* ---------- bulk action bar (2+ notes selected) ---------- */
+
+/* Sits at the foot of the sidebar, outside .sidebar-scroll, so it stays put
+   while the lists scroll under it. Only rendered while a multi-selection
+   exists (see Sidebar.tsx), so it costs nothing the rest of the time. */
+.note-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--accent-border);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  animation: tc-popover-in var(--dur-med) var(--ease-out);
+}
+
+.note-bulk-count {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: var(--space-1);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The popover is a fixed-position child of this wrapper — it only exists so
+   usePopoverDismiss can tell "inside the menu" from "outside". */
+.note-bulk-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.note-bulk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.note-bulk-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-h);
+}
+
+.note-bulk-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Lit like a favorited row's star, for the same reason: it's showing state
+   ("all of these are favorites"), not just offering an action. */
+.note-bulk-btn.is-favorite {
+  color: var(--accent);
+}
+
+.note-bulk-btn--danger:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+@media (pointer: coarse) {
+  .note-bulk-btn {
+    padding: var(--space-2) var(--space-3);
+  }
 }
 
 /* No hover on touch devices — hover-revealed controls stay visible. */
