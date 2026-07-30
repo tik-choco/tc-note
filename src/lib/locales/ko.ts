@@ -396,4 +396,49 @@ export const ko: Record<TranslationKey, Entry> = {
   "aiQueue.dismiss": "닫기",
   "aiQueue.streamedChars": (params) => `${params.count}자 수신`,
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": "새 버전이 있습니다",
+  "pwa.update": "업데이트",
+  "pwa.later": "나중에",
+  "pwa.offlineReady": "오프라인에서 사용할 준비가 되었습니다",
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": "변경 기록",
+  "history.title": "변경 기록",
+  "history.close": "닫기",
+  "history.empty": "아직 기록이 없습니다",
+  "history.current": "현재 버전",
+  "history.restore": "이 버전으로 복원",
+  "history.restored": "이 버전으로 복원했습니다",
+  "history.restoreFailed": "이 버전을 불러올 수 없습니다",
+  "history.previewLabel": "내용 미리보기",
+  "history.justNow": "방금 전",
+  "history.minutesAgo": (params) => `${params.count}분 전`,
+  "history.hoursAgo": (params) => `${params.count}시간 전`,
+  "history.daysAgo": (params) => `${params.count}일 전`,
+  "history.versionCount": (params) => `${params.count}개 버전`,
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": "이미지를 붙여넣을 수 없습니다",
+  "imagePaste.tooLarge": (params) => `"${params.name}" 파일이 너무 커서 삽입할 수 없습니다`,
+  "imagePaste.processing": "이미지 처리 중...",
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": "백업",
+  "backup.description": "모든 노트와 폴더를 하나의 파일로 내보냅니다",
+  "backup.export": "내보내기",
+  "backup.import": "가져오기",
+  "backup.exporting": "내보내는 중...",
+  "backup.exported": (params) => `노트 ${params.count}개를 내보냈습니다`,
+  "backup.exportFailed": "내보내기에 실패했습니다",
+  "backup.importConfirm": (params) => `노트 ${params.count}개를 가져옵니다. 페이지가 다시 로드됩니다.`,
+  "backup.imported": (params) => `노트 ${params.count}개를 가져왔습니다`,
+  "backup.importFailed": "가져오기에 실패했습니다",
+  "backup.invalidFile": "지원하지 않는 파일 형식입니다",
+  "backup.importing": "가져오는 중...",
+  // --- end backup ---
 };

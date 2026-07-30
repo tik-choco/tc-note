@@ -409,4 +409,49 @@ export const es: Record<TranslationKey, Entry> = {
   "aiQueue.dismiss": "Descartar",
   "aiQueue.streamedChars": (params) => `${params.count} caracteres recibidos`,
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": "Hay una nueva versión disponible",
+  "pwa.update": "Actualizar",
+  "pwa.later": "Más tarde",
+  "pwa.offlineReady": "Listo para funcionar sin conexión",
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": "Historial",
+  "history.title": "Historial",
+  "history.close": "Cerrar",
+  "history.empty": "Aún no hay versiones",
+  "history.current": "Actual",
+  "history.restore": "Restaurar esta versión",
+  "history.restored": "Se restauró esta versión",
+  "history.restoreFailed": "No se pudo cargar esta versión",
+  "history.previewLabel": "Vista previa",
+  "history.justNow": "justo ahora",
+  "history.minutesAgo": (params) => `hace ${params.count} min`,
+  "history.hoursAgo": (params) => `hace ${params.count} h`,
+  "history.daysAgo": (params) => `hace ${params.count} d`,
+  "history.versionCount": (params) => `${params.count} versiones`,
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": "No se pudo pegar la imagen",
+  "imagePaste.tooLarge": (params) => `${params.name} es demasiado grande para insertar`,
+  "imagePaste.processing": "Procesando imagen...",
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": "Copia de seguridad",
+  "backup.description": "Exporta todas las notas y carpetas a un solo archivo",
+  "backup.export": "Exportar",
+  "backup.import": "Importar",
+  "backup.exporting": "Exportando...",
+  "backup.exported": (params) => `Se exportaron ${params.count} notas`,
+  "backup.exportFailed": "Error al exportar",
+  "backup.importConfirm": (params) => `¿Importar ${params.count} notas? La página se recargará.`,
+  "backup.imported": (params) => `Se importaron ${params.count} notas`,
+  "backup.importFailed": "Error al importar",
+  "backup.invalidFile": "Formato de archivo no compatible",
+  "backup.importing": "Importando...",
+  // --- end backup ---
 };

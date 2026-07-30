@@ -395,4 +395,49 @@ export const zh: Record<TranslationKey, Entry> = {
   "aiQueue.dismiss": "关闭",
   "aiQueue.streamedChars": (params) => `已接收 ${params.count} 个字符`,
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": "有可用的新版本",
+  "pwa.update": "更新",
+  "pwa.later": "稍后",
+  "pwa.offlineReady": "已可离线使用",
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": "变更历史",
+  "history.title": "变更历史",
+  "history.close": "关闭",
+  "history.empty": "暂无历史记录",
+  "history.current": "当前版本",
+  "history.restore": "恢复到此版本",
+  "history.restored": "已恢复到此版本",
+  "history.restoreFailed": "无法加载此版本",
+  "history.previewLabel": "内容预览",
+  "history.justNow": "刚刚",
+  "history.minutesAgo": (params) => `${params.count} 分钟前`,
+  "history.hoursAgo": (params) => `${params.count} 小时前`,
+  "history.daysAgo": (params) => `${params.count} 天前`,
+  "history.versionCount": (params) => `${params.count} 个版本`,
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": "无法粘贴图片",
+  "imagePaste.tooLarge": (params) => `${params.name} 太大，无法插入`,
+  "imagePaste.processing": "正在处理图片...",
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": "备份",
+  "backup.description": "将所有笔记和文件夹导出为一个文件",
+  "backup.export": "导出",
+  "backup.import": "导入",
+  "backup.exporting": "正在导出...",
+  "backup.exported": (params) => `已导出 ${params.count} 篇笔记`,
+  "backup.exportFailed": "导出失败",
+  "backup.importConfirm": (params) => `将导入 ${params.count} 篇笔记，页面将重新加载。`,
+  "backup.imported": (params) => `已导入 ${params.count} 篇笔记`,
+  "backup.importFailed": "导入失败",
+  "backup.invalidFile": "不支持的文件格式",
+  "backup.importing": "正在导入...",
+  // --- end backup ---
 };

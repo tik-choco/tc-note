@@ -405,4 +405,49 @@ export const pt: Record<TranslationKey, Entry> = {
   "aiQueue.dismiss": "Dispensar",
   "aiQueue.streamedChars": (params) => `${params.count} caracteres recebidos`,
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": "Uma nova versão está disponível",
+  "pwa.update": "Atualizar",
+  "pwa.later": "Mais tarde",
+  "pwa.offlineReady": "Pronto para uso offline",
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": "Histórico",
+  "history.title": "Histórico",
+  "history.close": "Fechar",
+  "history.empty": "Ainda não há versões",
+  "history.current": "Atual",
+  "history.restore": "Restaurar esta versão",
+  "history.restored": "Esta versão foi restaurada",
+  "history.restoreFailed": "Não foi possível carregar esta versão",
+  "history.previewLabel": "Pré-visualização",
+  "history.justNow": "agora mesmo",
+  "history.minutesAgo": (params) => `há ${params.count} min`,
+  "history.hoursAgo": (params) => `há ${params.count} h`,
+  "history.daysAgo": (params) => `há ${params.count} d`,
+  "history.versionCount": (params) => `${params.count} versões`,
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": "Não foi possível colar a imagem",
+  "imagePaste.tooLarge": (params) => `"${params.name}" é muito grande para inserir`,
+  "imagePaste.processing": "Processando imagem...",
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": "Backup",
+  "backup.description": "Exportar todas as notas e pastas para um único arquivo",
+  "backup.export": "Exportar",
+  "backup.import": "Importar",
+  "backup.exporting": "Exportando...",
+  "backup.exported": (params) => `${params.count} notas exportadas`,
+  "backup.exportFailed": "Falha ao exportar",
+  "backup.importConfirm": (params) => `Importar ${params.count} notas? A página será recarregada.`,
+  "backup.imported": (params) => `${params.count} notas importadas`,
+  "backup.importFailed": "Falha ao importar",
+  "backup.invalidFile": "Formato de arquivo não compatível",
+  "backup.importing": "Importando...",
+  // --- end backup ---
 };
