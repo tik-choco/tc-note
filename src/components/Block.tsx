@@ -249,6 +249,11 @@ export function Block(props: {
    *  called with a payload (see splitBlockAtCursor). */
   onSplit: (cursor: number, paste?: PastePayload) => void;
   onMergeIntoPrevious: () => void;
+  /** Ctrl+V of a screenshot (or other clipboard image) while this block is
+   *  active — forwarded from LivePreviewEditor's paste handler up to
+   *  BlockEditor, which embeds it via the same pipeline a drop uses (see
+   *  BlockEditor.tsx's handleImagePaste). */
+  onPasteImage?: (file: File) => void;
   /** Peers (name/color) currently editing this block, for a collab presence border. */
   peerEditors?: { name: string; color: string }[];
   /** Second Cmd/Ctrl+A while all text in this block's textarea is already selected. */
@@ -277,6 +282,7 @@ export function Block(props: {
     onDeactivate,
     onSplit,
     onMergeIntoPrevious,
+    onPasteImage,
     peerEditors = [],
     onEscalateSelectAll,
     onExtendBlockSelection,
@@ -385,6 +391,7 @@ export function Block(props: {
         onChange={onChange}
         onSplit={onSplit}
         onMergeIntoPrevious={onMergeIntoPrevious}
+        onPasteImage={onPasteImage}
         onDeactivate={onDeactivate}
         onEscalateSelectAll={onEscalateSelectAll}
         onExtendBlockSelection={onExtendBlockSelection}
