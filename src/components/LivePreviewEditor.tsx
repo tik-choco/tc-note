@@ -168,6 +168,24 @@ function insertLink(view: EditorView): boolean {
   return true;
 }
 
+// Clipboard image data (e.g. Ctrl+V of a screenshot) carries no text/plain
+// payload, so it never reaches handlePaste's normal text path below — this
+// is the one other shape a paste can usefully have. `items` is checked too
+// because some browsers only expose an in-memory clipboard image via
+// DataTransferItemList, not the `files` property.
+function extractClipboardImage(data: DataTransfer): File | null {
+  for (const file of Array.from(data.files ?? [])) {
+    if (file.type.startsWith("image/")) return file;
+  }
+  for (const item of Array.from(data.items ?? [])) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) return file;
+    }
+  }
+  return null;
+}
+
 type Props = {
   /** This block's position, used to claim a pending multi-block-paste caret. */
   index: number;
@@ -177,6 +195,10 @@ type Props = {
   onChange: (value: string) => void;
   onSplit: (cursor: number, paste?: PastePayload) => void;
   onMergeIntoPrevious: () => void;
+  /** Ctrl+V of a screenshot (or other clipboard image) — see handlePaste's
+   *  image branch below. Forwarded up through Block to BlockEditor, which
+   *  owns the actual embed pipeline. */
+  onPasteImage?: (file: File) => void;
   onDeactivate: (options?: { skipPrune?: boolean }) => void;
   onEscalateSelectAll?: () => void;
   onExtendBlockSelection?: (direction: 1 | -1) => void;
@@ -362,12 +384,29 @@ export function LivePreviewEditor(props: Props) {
 
   // Auto-format pastes into the block model (mirrors the old textarea path):
   // default paste splits blank-line paragraphs into blocks; Mod+Shift+V pastes
-  // raw into this block only.
+  // raw into this block only. A paste with no usable text/plain but genuine
+  // image data (Ctrl+V of a screenshot) takes an early-return image branch
+  // instead — forwarded to onPasteImage, which BlockEditor embeds via the
+  // same pipeline a file drop uses. When that branch doesn't fire (there's
+  // text, or there's neither text nor an image), everything below is
+  // unchanged from before images were handled at all.
   function handlePaste(e: ClipboardEvent, view: EditorView): boolean {
     const data = e.clipboardData;
     if (!data) return false;
     const pasted = data.getData("text/plain");
-    if (!pasted) return false;
+    if (!pasted) {
+      const imageFile = extractClipboardImage(data);
+      if (!imageFile) return false;
+      e.preventDefault();
+      // The paste doesn't carry modifiers reliably, so Mod+Shift+V raw-paste
+      // intent is latched on keydown (see the keydown handler below) — an
+      // image paste isn't a text split/raw decision, but the latch must
+      // still be consumed here so it doesn't leak into the next, unrelated
+      // paste.
+      shiftPasteRef.current = false;
+      cb.current.onPasteImage?.(imageFile);
+      return true;
+    }
     e.preventDefault();
     const m = view.state.selection.main;
     const rawMode = shiftPasteRef.current;
