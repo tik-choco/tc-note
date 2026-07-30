@@ -3,7 +3,7 @@ import type { JSX } from "preact";
 import { useState } from "preact/hooks";
 import type { PastePayload } from "../lib/blocks";
 import type { BibtexEntry } from "../lib/bibtex";
-import { fileToMarkdown } from "../lib/files";
+import { fileToMarkdown, renameGenericClipboardImage } from "../lib/files";
 import { syncDroppedFileToTcStorage } from "../lib/storageDriveInbox";
 import { Block } from "./Block";
 import { Icon } from "./Icon";
@@ -16,6 +16,12 @@ import { useT } from "../hooks/useAppSettings";
 // pointer — "before"/"after" this row, per which half of its height the
 // pointer is over. Drawn as a thin accent line on that edge of the row.
 type DropIndicator = { index: number; position: "before" | "after" } | null;
+
+// How long an image-paste embed (resize + base64-encode, see
+// handleImagePaste below) can run before it's worth telling the user
+// something's happening — most screenshots resolve well under this, so the
+// toast only appears for genuinely large/slow ones.
+const IMAGE_PASTE_PROCESSING_DELAY_MS = 400;
 
 export function BlockEditor(props: {
   titleInputRef: Ref<HTMLInputElement>;
@@ -36,6 +42,17 @@ export function BlockEditor(props: {
   onInsertBlocksAfter: (index: number, scaffolds: string[], focus: boolean) => void;
   /** A dropped file was too large to embed inline (see lib/files.ts) — surfaced as a toast. */
   onFileTooLarge: (name: string) => void;
+  /** A pasted image (Ctrl+V of a screenshot) is being resized/encoded and is
+   *  taking a while — surfaced as a toast (imagePaste.processing). Optional:
+   *  the paste still completes without it, just silently. */
+  onImagePasteProcessing?: () => void;
+  /** A pasted image failed to embed (e.g. a FileReader error) — surfaced as
+   *  a toast (imagePaste.failed). */
+  onImagePasteFailed?: () => void;
+  /** A pasted image was too large to embed even after downscaling —
+   *  surfaced as a toast (imagePaste.tooLarge). Falls back to onFileTooLarge
+   *  if not wired, so the failure is never silent. */
+  onImagePasteTooLarge?: (name: string) => void;
   onEscalateSelectAll: () => void;
   onExtendBlockSelection: (index: number, direction: 1 | -1) => void;
   /** Arrow-up/down past a block's first/last line — move the caret into the
@@ -66,6 +83,9 @@ export function BlockEditor(props: {
     onInsertAfter,
     onInsertBlocksAfter,
     onFileTooLarge,
+    onImagePasteProcessing,
+    onImagePasteFailed,
+    onImagePasteTooLarge,
     onEscalateSelectAll,
     onExtendBlockSelection,
     onNavigateBlock,
@@ -131,25 +151,63 @@ export function BlockEditor(props: {
     setDropIndicator((prev) => (prev && prev.index === index ? null : prev));
   }
 
-  // Dropped files are embedded as data-URL markdown (see lib/files.ts) and
-  // spliced in as new blocks right after `afterIndex` — reusing the same
-  // insert path the "+" menu uses, just with multiple scaffolds at once.
-  // Separately (and independent of the note-embed size cap), each file is
-  // also mirrored into tc-storage's drive on a best-effort basis, published
-  // via the shared bus rather than written to tc-storage's own storage
-  // directly — see storageDriveInbox.ts for why that needs its own
-  // encrypted-upload step rather than just writing the same markdown/data-URL
-  // there too.
-  async function insertDroppedFiles(files: FileList, afterIndex: number) {
-    const fileList = Array.from(files);
-    const results = await Promise.all(fileList.map(fileToMarkdown));
+  // Shared core of the drop and paste image-embed paths: encodes each file
+  // to a markdown scaffold (resizing images that are too big to embed
+  // inline — see lib/imageResize.ts, invoked inside fileToMarkdown) and
+  // splices the successful ones in right after `afterIndex`, the same
+  // insert-blocks action the "+" menu uses. A file that's still too large
+  // after resizing reports via `onTooLarge` instead of being inserted. Kept
+  // as one function (rather than duplicated per caller) so a pasted image
+  // and a dropped image always end up in exactly the same state.
+  async function embedFiles(files: File[], afterIndex: number, onTooLarge: (name: string) => void) {
+    const results = await Promise.all(files.map(fileToMarkdown));
     const scaffolds: string[] = [];
     for (const result of results) {
-      if ("tooLarge" in result) onFileTooLarge(result.name);
+      if ("tooLarge" in result) onTooLarge(result.name);
       else scaffolds.push(result.markdown);
     }
     if (scaffolds.length > 0) onInsertBlocksAfter(afterIndex, scaffolds, false);
+  }
+
+  // Dropped files are embedded as data-URL markdown and spliced in as new
+  // blocks right after `afterIndex` (see embedFiles above). Separately (and
+  // independent of the note-embed size cap), each file is also mirrored
+  // into tc-storage's drive on a best-effort basis, published via the shared
+  // bus rather than written to tc-storage's own storage directly — see
+  // storageDriveInbox.ts for why that needs its own encrypted-upload step
+  // rather than just writing the same markdown/data-URL there too.
+  async function insertDroppedFiles(files: FileList, afterIndex: number) {
+    const fileList = Array.from(files);
+    await embedFiles(fileList, afterIndex, onFileTooLarge);
     for (const file of fileList) void syncDroppedFileToTcStorage(file);
+  }
+
+  // Ctrl+V of a screenshot (see LivePreviewEditor's handlePaste) lands here
+  // with the raw clipboard File, `index` being the block that was active
+  // when the paste happened. Reuses embedFiles — the exact same pipeline a
+  // drop uses — just anchored at the active block instead of the row under
+  // the pointer, so a pasted image and a dropped image end up in exactly the
+  // same state. The paste path gets its own toast copy (imagePaste.*,
+  // distinct from the drop path's blockEditor.fileTooLarge) via the
+  // onImagePaste* props; onImagePasteTooLarge falls back to onFileTooLarge
+  // so the failure is never silently dropped if the former isn't wired.
+  async function handleImagePaste(index: number, file: File) {
+    let settled = false;
+    const timer = onImagePasteProcessing
+      ? setTimeout(() => {
+          if (!settled) onImagePasteProcessing();
+        }, IMAGE_PASTE_PROCESSING_DELAY_MS)
+      : undefined;
+    try {
+      const named = renameGenericClipboardImage(file);
+      await embedFiles([named], index, onImagePasteTooLarge ?? onFileTooLarge);
+      void syncDroppedFileToTcStorage(named);
+    } catch {
+      onImagePasteFailed?.();
+    } finally {
+      settled = true;
+      if (timer !== undefined) clearTimeout(timer);
+    }
   }
 
   function handleRowDrop(e: JSX.TargetedDragEvent<HTMLDivElement>, index: number) {
@@ -226,6 +284,7 @@ export function BlockEditor(props: {
             onDeactivate={onDeactivate}
             onSplit={(cursor, paste) => onSplit(i, cursor, paste)}
             onMergeIntoPrevious={() => onMergeIntoPrevious(i)}
+            onPasteImage={(file) => void handleImagePaste(i, file)}
             onEscalateSelectAll={onEscalateSelectAll}
             onExtendBlockSelection={(dir) => onExtendBlockSelection(i, dir)}
             onNavigateBlock={(dir, column) => onNavigateBlock(i, dir, column)}
