@@ -616,6 +616,78 @@ const dict = {
     en: (params) => `${params.count} chars received`,
   },
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": { ja: "新しいバージョンがあります", en: "A new version is available" },
+  "pwa.update": { ja: "更新", en: "Update" },
+  "pwa.later": { ja: "あとで", en: "Later" },
+  "pwa.offlineReady": { ja: "オフラインで使えるようになりました", en: "Ready to work offline" },
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": { ja: "変更履歴", en: "History" },
+  "history.title": { ja: "変更履歴", en: "History" },
+  "history.close": { ja: "閉じる", en: "Close" },
+  "history.empty": { ja: "まだ履歴がありません", en: "No versions yet" },
+  "history.current": { ja: "現在の版", en: "Current" },
+  "history.restore": { ja: "この版に戻す", en: "Restore this version" },
+  "history.restored": { ja: "この版に戻しました", en: "Restored this version" },
+  "history.restoreFailed": { ja: "この版を読み込めませんでした", en: "Could not load this version" },
+  "history.previewLabel": { ja: "内容のプレビュー", en: "Preview" },
+  "history.justNow": { ja: "たった今", en: "just now" },
+  "history.minutesAgo": {
+    ja: (params) => `${params.count}分前`,
+    en: (params) => `${params.count} min ago`,
+  },
+  "history.hoursAgo": {
+    ja: (params) => `${params.count}時間前`,
+    en: (params) => `${params.count} h ago`,
+  },
+  "history.daysAgo": {
+    ja: (params) => `${params.count}日前`,
+    en: (params) => `${params.count} d ago`,
+  },
+  "history.versionCount": {
+    ja: (params) => `${params.count}件の版`,
+    en: (params) => `${params.count} versions`,
+  },
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": { ja: "画像を貼り付けられませんでした", en: "Could not paste the image" },
+  "imagePaste.tooLarge": {
+    ja: (params) => `${params.name} は大きすぎるため挿入できません`,
+    en: (params) => `${params.name} is too large to insert`,
+  },
+  "imagePaste.processing": { ja: "画像を処理中...", en: "Processing image..." },
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": { ja: "バックアップ", en: "Backup" },
+  "backup.description": {
+    ja: "すべてのノートとフォルダを1つのファイルに書き出します",
+    en: "Export all notes and folders to a single file",
+  },
+  "backup.export": { ja: "書き出す", en: "Export" },
+  "backup.import": { ja: "読み込む", en: "Import" },
+  "backup.exporting": { ja: "書き出し中...", en: "Exporting..." },
+  "backup.exported": {
+    ja: (params) => `${params.count}件のノートを書き出しました`,
+    en: (params) => `Exported ${params.count} notes`,
+  },
+  "backup.exportFailed": { ja: "書き出しに失敗しました", en: "Export failed" },
+  "backup.importConfirm": {
+    ja: (params) => `${params.count}件のノートを読み込みます。ページが再読み込みされます。`,
+    en: (params) => `Import ${params.count} notes? The page will reload.`,
+  },
+  "backup.imported": {
+    ja: (params) => `${params.count}件のノートを読み込みました`,
+    en: (params) => `Imported ${params.count} notes`,
+  },
+  "backup.importFailed": { ja: "読み込みに失敗しました", en: "Import failed" },
+  "backup.invalidFile": { ja: "対応していないファイル形式です", en: "Unsupported file format" },
+  "backup.importing": { ja: "読み込み中...", en: "Importing..." },
+  // --- end backup ---
 } satisfies Record<string, { ja: Entry; en: Entry }>;
 
 export type TranslationKey = keyof typeof dict;

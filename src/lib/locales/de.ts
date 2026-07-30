@@ -405,4 +405,49 @@ export const de: Record<TranslationKey, Entry> = {
   "aiQueue.dismiss": "Verwerfen",
   "aiQueue.streamedChars": (params) => `${params.count} Zeichen empfangen`,
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": "Eine neue Version ist verfügbar",
+  "pwa.update": "Aktualisieren",
+  "pwa.later": "Später",
+  "pwa.offlineReady": "Bereit für die Offline-Nutzung",
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": "Verlauf",
+  "history.title": "Verlauf",
+  "history.close": "Schließen",
+  "history.empty": "Noch keine Versionen",
+  "history.current": "Aktuell",
+  "history.restore": "Diese Version wiederherstellen",
+  "history.restored": "Diese Version wurde wiederhergestellt",
+  "history.restoreFailed": "Diese Version konnte nicht geladen werden",
+  "history.previewLabel": "Vorschau",
+  "history.justNow": "gerade eben",
+  "history.minutesAgo": (params) => `vor ${params.count} Min.`,
+  "history.hoursAgo": (params) => `vor ${params.count} Std.`,
+  "history.daysAgo": (params) => `vor ${params.count} Tg.`,
+  "history.versionCount": (params) => `${params.count} Versionen`,
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": "Das Bild konnte nicht eingefügt werden",
+  "imagePaste.tooLarge": (params) => `"${params.name}" ist zu groß zum Einfügen`,
+  "imagePaste.processing": "Bild wird verarbeitet...",
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": "Sicherung",
+  "backup.description": "Alle Notizen und Ordner in eine einzelne Datei exportieren",
+  "backup.export": "Exportieren",
+  "backup.import": "Importieren",
+  "backup.exporting": "Wird exportiert...",
+  "backup.exported": (params) => `${params.count} Notizen exportiert`,
+  "backup.exportFailed": "Export fehlgeschlagen",
+  "backup.importConfirm": (params) => `${params.count} Notizen importieren? Die Seite wird neu geladen.`,
+  "backup.imported": (params) => `${params.count} Notizen importiert`,
+  "backup.importFailed": "Import fehlgeschlagen",
+  "backup.invalidFile": "Nicht unterstütztes Dateiformat",
+  "backup.importing": "Wird importiert...",
+  // --- end backup ---
 };

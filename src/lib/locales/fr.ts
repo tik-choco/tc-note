@@ -408,4 +408,49 @@ export const fr: Record<TranslationKey, Entry> = {
   "aiQueue.dismiss": "Ignorer",
   "aiQueue.streamedChars": (params) => `${params.count} caractères reçus`,
   // --- end aiQueue ---
+
+  // --- pwa ---
+  "pwa.updateAvailable": "Une nouvelle version est disponible",
+  "pwa.update": "Mettre à jour",
+  "pwa.later": "Plus tard",
+  "pwa.offlineReady": "Prêt à fonctionner hors ligne",
+  // --- end pwa ---
+
+  // --- history ---
+  "history.open": "Historique",
+  "history.title": "Historique",
+  "history.close": "Fermer",
+  "history.empty": "Pas encore de versions",
+  "history.current": "Actuelle",
+  "history.restore": "Restaurer cette version",
+  "history.restored": "Cette version a été restaurée",
+  "history.restoreFailed": "Impossible de charger cette version",
+  "history.previewLabel": "Aperçu",
+  "history.justNow": "à l'instant",
+  "history.minutesAgo": (params) => `il y a ${params.count} min`,
+  "history.hoursAgo": (params) => `il y a ${params.count} h`,
+  "history.daysAgo": (params) => `il y a ${params.count} j`,
+  "history.versionCount": (params) => `${params.count} versions`,
+  // --- end history ---
+
+  // --- imagePaste ---
+  "imagePaste.failed": "Impossible de coller l'image",
+  "imagePaste.tooLarge": (params) => `« ${params.name} » est trop volumineux pour être inséré`,
+  "imagePaste.processing": "Traitement de l'image en cours...",
+  // --- end imagePaste ---
+
+  // --- backup ---
+  "backup.section": "Sauvegarde",
+  "backup.description": "Exporter toutes les notes et tous les dossiers dans un seul fichier",
+  "backup.export": "Exporter",
+  "backup.import": "Importer",
+  "backup.exporting": "Exportation en cours...",
+  "backup.exported": (params) => `${params.count} notes exportées`,
+  "backup.exportFailed": "Échec de l'exportation",
+  "backup.importConfirm": (params) => `Importer ${params.count} notes ? La page sera rechargée.`,
+  "backup.imported": (params) => `${params.count} notes importées`,
+  "backup.importFailed": "Échec de l'importation",
+  "backup.invalidFile": "Format de fichier non pris en charge",
+  "backup.importing": "Importation en cours...",
+  // --- end backup ---
 };
