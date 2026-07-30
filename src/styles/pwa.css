@@ -1,0 +1,71 @@
+/* Update / offline-ready notice for the installed PWA (see src/lib/pwa.ts,
+   PwaUpdatePrompt.tsx). Pinned bottom-left — clear of both the centered
+   toast stack (toast.css: left:50%, bottom:24px) and the bottom-right AI
+   queue indicator (ai-queue.css: right, bottom:52px) so none of the three
+   ever overlap. Visual language matches both: same surface/border/shadow-2
+   card, same tc-toast-in entrance (defined once in index.css). */
+
+.pwa-prompt {
+  position: fixed;
+  left: var(--space-5);
+  bottom: var(--space-5);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 280px;
+  max-width: calc(100vw - var(--space-6));
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  font-size: 13px;
+  line-height: 1.4;
+  animation: tc-toast-in var(--dur-med) var(--ease-out);
+}
+
+.pwa-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.pwa-prompt-update {
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.pwa-prompt-update:hover {
+  background: var(--accent-hover);
+}
+
+.pwa-prompt-update:active {
+  background: var(--accent-active);
+}
+
+.pwa-prompt-later {
+  border: none;
+  background: none;
+  color: var(--text-subtle);
+  font: inherit;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.pwa-prompt-later:hover {
+  color: var(--text-h);
+  background: var(--surface-hover);
+}
