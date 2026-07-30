@@ -2,6 +2,7 @@
 import path from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import preact from '@preact/preset-vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -25,9 +26,59 @@ export default defineConfig(({ mode }) => {
     console.log(`vite: using local mist engine at ${alias['@tik-choco/mistlib']}`)
   }
 
+  // Deploys under /tc-note/ on GitHub Pages (VITE_BASE_PATH — see CLAUDE.md
+  // "Deployment") but runs at '/' locally. The PWA manifest's start_url/
+  // scope must track this same value — an installed PWA built from the
+  // GitHub Pages build would otherwise register itself scoped to the origin
+  // root instead of /tc-note/, breaking install/launch there.
+  const base = process.env.VITE_BASE_PATH || '/'
+
   return {
-  base: process.env.VITE_BASE_PATH || '/',
-  plugins: [preact()],
+  base,
+  plugins: [
+    preact(),
+    VitePWA({
+      // Explicit "update available" prompt (see src/components/
+      // PwaUpdatePrompt.tsx) rather than autoUpdate's silent reload, which
+      // could yank a mid-edit note out from under the user.
+      registerType: 'prompt',
+      // No service worker / precache in dev — `npm run dev` behaves exactly
+      // as it did before this plugin was added.
+      devOptions: { enabled: false },
+      manifest: {
+        name: 'TC Note',
+        short_name: 'TC Note',
+        description:
+          'TC Note — a block-based markdown note app with collaboration and PDF import',
+        lang: 'ja',
+        display: 'standalone',
+        start_url: base,
+        scope: base,
+        // Light-theme surface/accent (src/index.css :root) — the dark theme
+        // overrides don't apply here since the manifest is static.
+        background_color: '#ffffff',
+        theme_color: '#0d9488',
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,wasm}'],
+        // The mist engine (@tik-choco/mistlib) ships a ~1.4MB wasm binary
+        // and the app's largest JS bundle already sits just past Workbox's
+        // 2MiB default ceiling — raise it with headroom for both to keep
+        // getting precached as the app grows.
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+      },
+    }),
+  ],
   resolve: { alias },
   test: {
     // Vitest's default excludes don't cover dotfolders like .claude/ — without

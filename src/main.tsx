@@ -2,6 +2,7 @@ import { render } from 'preact'
 import '@tik-choco/mistai/ui.css'
 import './index.css'
 import { App } from './app.tsx'
+import { PwaUpdatePrompt } from './components/PwaUpdatePrompt.tsx'
 import { AppSettingsProvider } from './hooks/useAppSettings'
 import { loadAppSettings } from './lib/appSettings'
 import { writeAppManifest } from './lib/appManifest'
@@ -19,6 +20,7 @@ if (initialTheme !== 'system') {
 render(
   <AppSettingsProvider>
     <App />
+    <PwaUpdatePrompt />
   </AppSettingsProvider>,
   document.getElementById('app')!,
 )
