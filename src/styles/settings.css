@@ -7,9 +7,9 @@
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: var(--space-5);
+  padding: min(10vh, 80px) var(--space-5) var(--space-5);
   background: var(--overlay);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -18,7 +18,7 @@
 }
 
 .settings-modal {
-  width: min(560px, 92vw);
+  width: min(780px, 100%);
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -28,6 +28,19 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-3);
   animation: tc-modal-in var(--dur-med) var(--ease-out);
+  --mistai-surface: var(--surface);
+  --mistai-surface-2: var(--surface-2);
+  --mistai-border: var(--border);
+  --mistai-border-strong: var(--border-strong);
+  --mistai-text: var(--text);
+  --mistai-text-muted: var(--text-subtle);
+  --mistai-text-strong: var(--text-h);
+  --mistai-primary: var(--accent);
+  --mistai-primary-soft: var(--accent-bg);
+  --mistai-focus: var(--accent);
+  --mistai-focus-ring: var(--ring);
+  --mistai-danger-text: var(--danger);
+  --mistai-font-family: inherit;
 }
 
 .settings-header {
@@ -108,4 +121,18 @@
   gap: var(--space-4);
   padding: var(--space-5);
   overflow-y: auto;
+}
+
+.settings-panel > .mistai-settings {
+  width: 100%;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  animation: none;
+}
+
+.settings-panel > .mistai-settings > .modal-heading {
+  display: none;
 }

@@ -22,6 +22,8 @@ const LANGUAGE_LABELS: Record<Language, string> = {
   ja: "日本語",
   en: "English",
   zh: "中文",
+  "zh-CN": "中文（简体）",
+  "zh-TW": "中文（繁體）",
   es: "Español",
   fr: "Français",
   de: "Deutsch",

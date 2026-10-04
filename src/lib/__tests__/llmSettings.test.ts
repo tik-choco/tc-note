@@ -1,246 +1,64 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import {
-  DEFAULT_LLM_SETTINGS,
-  fetchModels,
-  loadLlmSettings,
-  saveLlmSettings,
-  setConnection,
-  setEmbeddingModel,
-  setProviderModeEnabled,
-  setReasoningEffort,
-  type LlmSettings,
-} from "../llmSettings";
-import { LLM_CONFIG_KEY, loadLlmConfig, saveLlmConfig } from "../llmConfig";
-
+import { DEFAULT_LLM_SETTINGS, fetchModels, loadLlmSettings, saveLlmSettings } from "../llmSettings";
+import { emptyLlmConfig, loadLlmConfig, saveLlmConfig } from "@tik-choco/mistai/llm-config";
 const SETTINGS_KEY = "tc-note:llm-settings";
-
-// This project's vitest setup runs in plain Node without jsdom, and Node's
-// experimental global `localStorage` isn't a full Storage implementation
-// (no clear()/removeItem()) — so stand in a minimal in-memory version for
-// llmSettings.ts's raw localStorage.getItem/setItem calls to hit.
-function createMemoryStorage(): Storage {
-  const store = new Map<string, string>();
-  return {
-    getItem: (key: string) => store.get(key) ?? null,
-    setItem: (key: string, value: string) => void store.set(key, value),
-    removeItem: (key: string) => void store.delete(key),
-    clear: () => store.clear(),
-    key: (index: number) => Array.from(store.keys())[index] ?? null,
-    get length() {
-      return store.size;
-    },
-  } as Storage;
-}
-
 beforeEach(() => {
-  vi.stubGlobal("localStorage", createMemoryStorage());
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) });
 });
-
-describe("loadLlmSettings / saveLlmSettings", () => {
-  it("returns defaults when nothing stored", () => {
+function legacyConfig() {
+  const config = emptyLlmConfig();
+  config.providers = [
+    { id: "http", label: "Endpoint", baseUrl: "https://endpoint.test/v1", apiKey: "", models: Array.from({ length: 300 }, (_, n) => "model-" + n) },
+    { id: "disabled", label: "Disabled", baseUrl: "https://disabled.test/v1", apiKey: "", enabled: false },
+    { id: "mirror", label: "Room", baseUrl: "mist-network://legacy-room", apiKey: "" },
+  ];
+  config.presets = [
+    { id: "old", label: "Old", providerId: "http", model: "model-42", reasoningEffort: "high", temperature: 0.6 },
+    { id: "off", label: "Off", providerId: "disabled", model: "model-off" },
+    { id: "room-old", label: "Mirror", providerId: "mirror", model: "remote" },
+  ];
+  config.defaultPresetId = "old"; config.network.roomId = "legacy-room";
+  saveLlmConfig(config); return config;
+}
+describe("model-ref settings migration", () => {
+  it("uses defaults and round-trips v2 settings", () => {
     expect(loadLlmSettings()).toEqual(DEFAULT_LLM_SETTINGS);
+    const next = { ...DEFAULT_LLM_SETTINGS, tasks: { default: { ref: { providerId: "p", model: "chosen" }, reasoningEffort: "max" as const } } };
+    saveLlmSettings(next); expect(loadLlmSettings().tasks.default).toEqual(next.tasks.default);
   });
-
-  it("round-trips through localStorage", () => {
-    const settings: LlmSettings = {
-      embeddingModel: "text-embedding-3-small",
-      connection: "network",
-      providerModeEnabled: true,
-      reasoningEffort: "medium",
-    };
-    saveLlmSettings(settings);
-    expect(loadLlmSettings()).toEqual(settings);
-  });
-
-  it("fills defaults for connection/providerModeEnabled/reasoningEffort when absent", () => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ embeddingModel: null }));
-    const loaded = loadLlmSettings();
-    expect(loaded.connection).toBe("api");
-    expect(loaded.providerModeEnabled).toBe(false);
-    expect(loaded.reasoningEffort).toBe("none");
-  });
-
-  it("picks up a legacy default-preset reasoningEffort once, without touching the shared preset", () => {
-    saveLlmConfig({
-      v: 1,
-      providers: [{ id: "p1", label: "OpenAI", baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" }],
-      presets: [{ id: "preset1", label: "gpt-4o", providerId: "p1", model: "gpt-4o", reasoningEffort: "high" }],
-      defaultPresetId: "preset1",
-      network: { roomId: "" },
-      updatedAt: new Date(0).toISOString(),
-    });
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ embeddingModel: null, connection: "api", providerModeEnabled: false }));
-
-    const loaded = loadLlmSettings();
-    expect(loaded.reasoningEffort).toBe("high");
-
-    // One-time only: the preset's own field is left untouched, and once the
-    // local record has its own reasoningEffort a second load doesn't
-    // re-derive from a since-changed preset.
+  it("migrates task IDs and per-room sharing once, preserving effort and all shared legacy fields", () => {
+    const old = legacyConfig();
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ tasks: { default: { presetId: "old", reasoningEffort: "low" }, embedding: { presetId: "off" } }, sharedPresetIds: ["old", "room-old"], networkProviderEnabled: true }));
+    const first = loadLlmSettings();
+    expect(first.tasks.default).toEqual({ ref: { providerId: "http", model: "model-42" }, reasoningEffort: "low" });
+    expect(first.tasks.embedding.ref).toEqual({ providerId: "disabled", model: "model-off" });
+    expect(first.roomProvide.mirror).toEqual({ enabled: true, shared: [{ providerId: "http", model: "model-42" }] });
     const shared = loadLlmConfig()!;
-    expect(shared.presets[0].reasoningEffort).toBe("high");
-    shared.presets[0].reasoningEffort = "low";
-    saveLlmConfig(shared);
-    expect(loadLlmSettings().reasoningEffort).toBe("high");
+    expect(shared.defaultModel).toEqual({ providerId: "http", model: "model-42" });
+    expect(shared.presets).toEqual(old.presets); expect(shared.network).toEqual(old.network); expect(shared.defaultPresetId).toEqual(old.defaultPresetId);
+    expect(shared.providers[0].models).toHaveLength(300);
+    const localRaw = localStorage.getItem(SETTINGS_KEY), sharedRaw = localStorage.getItem("tc-shared-llm-config-v1");
+    expect(loadLlmSettings()).toEqual(first);
+    expect(localStorage.getItem(SETTINGS_KEY)).toEqual(localRaw); expect(localStorage.getItem("tc-shared-llm-config-v1")).toEqual(sharedRaw);
   });
-
-  it("defaults reasoningEffort to 'none' on a pristine install (no legacy preset to read)", () => {
-    expect(loadLlmSettings().reasoningEffort).toBe("none");
+  it("inherits legacy effort but keeps an unassigned task following the default", () => {
+    legacyConfig(); expect(loadLlmSettings().tasks.default).toEqual({ reasoningEffort: "high" });
   });
-
-  it("falls back to defaults on corrupt JSON", () => {
-    localStorage.setItem(SETTINGS_KEY, "{not json");
-    expect(loadLlmSettings()).toEqual(DEFAULT_LLM_SETTINGS);
+  it("does not resurrect a cleared ref or repeat migration after a preset changes", () => {
+    legacyConfig(); localStorage.setItem(SETTINGS_KEY, JSON.stringify({ tasks: { default: "old" } }));
+    const migrated = loadLlmSettings(); delete migrated.tasks.default.ref; saveLlmSettings(migrated);
+    const shared = loadLlmConfig()!; shared.presets[0].model = "changed"; saveLlmConfig(shared);
+    expect(loadLlmSettings().tasks.default.ref).toBeUndefined();
   });
-
-  it("falls back to defaults on malformed shape", () => {
-    localStorage.setItem(SETTINGS_KEY, "null");
-    expect(loadLlmSettings()).toEqual(DEFAULT_LLM_SETTINGS);
+  it("imports older local endpoints directly to refs without writing presets or network legacy fields", () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ providers: [{ id: "p", label: "Endpoint", baseUrl: "https://old.test/v1/", apiKey: "" }], activeProviderId: "p", llmModel: "model-old", networkRoomId: "old-room", providerModeEnabled: true }));
+    const settings = loadLlmSettings(), config = loadLlmConfig()!;
+    expect(settings.tasks.default.ref).toEqual(config.defaultModel);
+    expect(config.presets).toEqual([]); expect(config.network.roomId).toBe(""); expect(config.providers).toHaveLength(2);
+    expect(Object.values(settings.roomProvide)[0].enabled).toBe(true);
   });
 });
-
-describe("setConnection / setProviderModeEnabled / setEmbeddingModel immutability", () => {
-  it("setConnection returns a new object without mutating the original", () => {
-    const next = setConnection(DEFAULT_LLM_SETTINGS, "network");
-    expect(DEFAULT_LLM_SETTINGS.connection).toBe("api");
-    expect(next.connection).toBe("network");
-    expect(next).not.toBe(DEFAULT_LLM_SETTINGS);
-  });
-
-  it("setProviderModeEnabled returns a new object without mutating the original", () => {
-    const next = setProviderModeEnabled(DEFAULT_LLM_SETTINGS, true);
-    expect(DEFAULT_LLM_SETTINGS.providerModeEnabled).toBe(false);
-    expect(next.providerModeEnabled).toBe(true);
-  });
-
-  it("setEmbeddingModel returns a new object without mutating the original", () => {
-    const next = setEmbeddingModel(DEFAULT_LLM_SETTINGS, "text-embedding-3-small");
-    expect(DEFAULT_LLM_SETTINGS.embeddingModel).toBeNull();
-    expect(next.embeddingModel).toBe("text-embedding-3-small");
-  });
-
-  it("setReasoningEffort returns a new object without mutating the original", () => {
-    const next = setReasoningEffort(DEFAULT_LLM_SETTINGS, "high");
-    expect(DEFAULT_LLM_SETTINGS.reasoningEffort).toBe("none");
-    expect(next.reasoningEffort).toBe("high");
-    expect(next).not.toBe(DEFAULT_LLM_SETTINGS);
-  });
-});
-
-describe("legacy migration", () => {
-  it("merges legacy providers/llmModel/networkRoomId into the shared config and prunes them locally", () => {
-    localStorage.setItem(
-      SETTINGS_KEY,
-      JSON.stringify({
-        providers: [{ id: "p1", label: "OpenAI", baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" }],
-        activeProviderId: "p1",
-        llmModel: "gpt-4o",
-        embeddingModel: "text-embedding-3-small",
-        connection: "network",
-        providerModeEnabled: true,
-        networkRoomId: "my-ai-room",
-      }),
-    );
-
-    const settings = loadLlmSettings();
-
-    // Local record is pruned to the new shape.
-    expect(settings).toEqual({
-      embeddingModel: "text-embedding-3-small",
-      connection: "network",
-      providerModeEnabled: true,
-      reasoningEffort: "none",
-    });
-    const rawLocal = JSON.parse(localStorage.getItem(SETTINGS_KEY)!);
-    expect(rawLocal.providers).toBeUndefined();
-    expect(rawLocal.activeProviderId).toBeUndefined();
-    expect(rawLocal.llmModel).toBeUndefined();
-    expect(rawLocal.networkRoomId).toBeUndefined();
-
-    // Shared config picked up the provider, a preset for the active model,
-    // the default preset, and the network room id.
-    const shared = loadLlmConfig()!;
-    expect(shared.providers).toHaveLength(1);
-    expect(shared.providers[0]).toMatchObject({ label: "OpenAI", baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" });
-    expect(shared.presets).toHaveLength(1);
-    expect(shared.presets[0]).toMatchObject({ label: "gpt-4o", model: "gpt-4o", providerId: shared.providers[0].id });
-    expect(shared.defaultPresetId).toBe(shared.presets[0].id);
-    expect(shared.network.roomId).toBe("my-ai-room");
-  });
-
-  it("is idempotent: a second load does not duplicate providers/presets or re-run migration", () => {
-    localStorage.setItem(
-      SETTINGS_KEY,
-      JSON.stringify({
-        providers: [{ id: "p1", label: "OpenAI", baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" }],
-        activeProviderId: "p1",
-        llmModel: "gpt-4o",
-        embeddingModel: null,
-        connection: "api",
-        providerModeEnabled: false,
-        networkRoomId: null,
-      }),
-    );
-
-    loadLlmSettings();
-    const afterFirst = loadLlmConfig()!;
-    expect(afterFirst.providers).toHaveLength(1);
-    expect(afterFirst.presets).toHaveLength(1);
-
-    loadLlmSettings();
-    const afterSecond = loadLlmConfig()!;
-    expect(afterSecond.providers).toHaveLength(1);
-    expect(afterSecond.presets).toHaveLength(1);
-  });
-
-  it("does not overwrite an already-set defaultPresetId or network.roomId from another app", () => {
-    localStorage.setItem(
-      LLM_CONFIG_KEY,
-      JSON.stringify({
-        v: 1,
-        providers: [{ id: "shared-p1", label: "Existing", baseUrl: "https://existing.example.com", apiKey: "k" }],
-        presets: [{ id: "shared-preset", label: "Existing model", providerId: "shared-p1", model: "existing-model" }],
-        defaultPresetId: "shared-preset",
-        network: { roomId: "already-set-room" },
-        updatedAt: new Date(0).toISOString(),
-      }),
-    );
-    localStorage.setItem(
-      SETTINGS_KEY,
-      JSON.stringify({
-        providers: [{ id: "p1", label: "OpenAI", baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" }],
-        activeProviderId: "p1",
-        llmModel: "gpt-4o",
-        embeddingModel: null,
-        connection: "api",
-        providerModeEnabled: false,
-        networkRoomId: "my-ai-room",
-      }),
-    );
-
-    loadLlmSettings();
-    const shared = loadLlmConfig()!;
-    expect(shared.defaultPresetId).toBe("shared-preset");
-    expect(shared.network.roomId).toBe("already-set-room");
-    // The legacy provider/preset are still merged in (merge-never-delete),
-    // just not made the default.
-    expect(shared.providers.some((p) => p.baseUrl === "https://api.openai.com/v1")).toBe(true);
-    expect(shared.presets.some((p) => p.model === "gpt-4o")).toBe(true);
-  });
-
-  it("does nothing when there are no legacy fields (new-shape record)", () => {
-    const settings: LlmSettings = {
-      embeddingModel: null,
-      connection: "api",
-      providerModeEnabled: false,
-      reasoningEffort: "none",
-    };
-    saveLlmSettings(settings);
-    loadLlmSettings();
-    expect(localStorage.getItem(LLM_CONFIG_KEY)).toBeNull();
-  });
-});
-
 describe("fetchModels", () => {
   const target = { baseUrl: "https://api.openai.com/v1", apiKey: "sk-test" };
 

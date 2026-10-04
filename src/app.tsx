@@ -221,16 +221,8 @@ export function App() {
     onRoomContentReplaced: () => showToast(t("app.roomContentReplaced")),
   });
 
-  // LLM chat transport: rides the collab room's session for the "network"
-  // path, or calls the configured provider directly for "api". Bound to the
-  // live session so it re-wires when the user joins/leaves/switches rooms.
   const llmNet = useLlmNet({
-    session: collab.session,
-    roomId: collab.roomId,
-    connection: llmSettings.settings.connection,
-    providerModeEnabled: llmSettings.settings.providerModeEnabled,
-    networkRoomId: llmSettings.shared.network.roomId || null,
-    resolved: llmSettings.resolved,
+    shared: llmSettings.shared, settings: llmSettings.settings, settingsOpen,
   });
 
   // Auto-join a room named in the URL (?room=xxx) on first load, e.g. after
@@ -949,21 +941,7 @@ export function App() {
 
       {settingsOpen && (
         <SettingsModal
-          settings={llmSettings.settings}
-          shared={llmSettings.shared}
-          onAddProvider={llmSettings.addProvider}
-          onUpdateProvider={llmSettings.updateProvider}
-          onRemoveProvider={llmSettings.removeProvider}
-          onAddPreset={llmSettings.addPreset}
-          onUpdatePreset={llmSettings.updatePreset}
-          onRemovePreset={llmSettings.removePreset}
-          onSetDefaultPresetId={llmSettings.setDefaultPresetId}
-          onSetEmbeddingModel={llmSettings.setEmbeddingModel}
-          onSetReasoningEffort={llmSettings.setReasoningEffort}
-          onSetConnection={llmSettings.setConnection}
-          onSetProviderModeEnabled={llmSettings.setProviderModeEnabled}
-          onSetNetworkRoomId={llmSettings.setNetworkRoomId}
-          net={llmNet}
+          localSettings={llmSettings.localAdapter}
           showToast={showToast}
           onClose={() => setSettingsOpen(false)}
         />

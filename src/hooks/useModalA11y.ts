@@ -19,6 +19,8 @@ export type UseModalA11yOptions = {
    * don't need this; omit it to keep the default behavior.
    */
   initialFocus?: () => HTMLElement | null;
+  /** Portaled controls belonging to this dialog. */
+  portalSelector?: string;
 };
 
 /**
@@ -39,14 +41,19 @@ export function useModalA11y(onClose: () => void, options?: UseModalA11yOptions)
   // ref so the mount effect (which must run only once) still sees it.
   const initialFocusRef = useRef(options?.initialFocus);
   initialFocusRef.current = options?.initialFocus;
+  const portalSelectorRef = useRef(options?.portalSelector);
+  portalSelectorRef.current = options?.portalSelector;
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
+    const portals = () => portalSelectorRef.current
+      ? Array.from(document.querySelectorAll<HTMLElement>(portalSelectorRef.current)) : [];
+    const owns = (element: Element | null) => container.contains(element) || portals().some(portal => portal.contains(element));
     const focusables = () =>
-      Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+      Array.from([container, ...portals()].flatMap(root => Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)))).filter(
         (el) => el.tabIndex !== -1,
       );
 
@@ -62,6 +69,7 @@ export function useModalA11y(onClose: () => void, options?: UseModalA11yOptions)
     // Arrow (not function declaration) so the null-narrowing of `container`
     // above carries into the closure.
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (e.key === "Escape") {
         // Escape during an IME composition cancels the conversion; closing
         // the modal then would destroy the half-typed form.
@@ -87,10 +95,10 @@ export function useModalA11y(onClose: () => void, options?: UseModalA11yOptions)
       const active = document.activeElement;
       // Wrap at the edges; also catch focus sitting on the container itself
       // (the no-focusables fallback above) or having escaped the modal.
-      if (e.shiftKey && (active === firstItem || !container.contains(active))) {
+      if (e.shiftKey && (active === firstItem || !owns(active))) {
         e.preventDefault();
         lastItem.focus();
-      } else if (!e.shiftKey && (active === lastItem || !container.contains(active))) {
+      } else if (!e.shiftKey && (active === lastItem || !owns(active))) {
         e.preventDefault();
         firstItem.focus();
       }

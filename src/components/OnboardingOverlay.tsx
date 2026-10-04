@@ -3,9 +3,10 @@ import { formatMistaiError, MESSAGES_EN, MESSAGES_JA } from "@tik-choco/mistai";
 import { useAppSettings, useT } from "../hooks/useAppSettings";
 import { useModalA11y } from "../hooks/useModalA11y";
 import { useOverlayDismiss } from "../hooks/useOverlayDismiss";
-import { requestApiChatCompletionStreaming } from "../lib/llm";
-import { emptyLlmConfig, ensurePreset, ensureProvider, loadLlmConfig, resolvePreset, saveLlmConfig } from "../lib/llmConfig";
+import { requestTaskChat } from "../lib/llm";
+import { createProvider, patchProvider, emptyLlmConfig, loadLlmConfig, resolveModel, saveLlmConfig } from "@tik-choco/mistai/llm-config";
 import type { TranslationKey } from "../lib/i18n";
+import { aiSettingsLocale, aiSettingsMessages } from "../lib/aiSettingsMessages";
 import { Icon, type IconName } from "./Icon";
 import "../styles/onboarding.css";
 
@@ -65,12 +66,12 @@ export function OnboardingOverlay(props: { onClose: () => void }) {
 
   const [step, setStep] = useState(0);
 
-  // The LLM draft starts from the shared config's resolved default preset (if
+  // The LLM draft starts from the shared config's resolved default model (if
   // any) so re-running the wizard shows — and edits — the real current
   // connection instead of blank fields.
   const [llm, setLlm] = useState<LlmDraft>(() => {
     const shared = loadLlmConfig();
-    const resolved = shared ? resolvePreset(shared) : null;
+    const resolved = shared ? resolveModel(shared) : null;
     return {
       baseUrl: resolved?.baseUrl ?? "",
       apiKey: resolved?.apiKey ?? "",
@@ -88,13 +89,7 @@ export function OnboardingOverlay(props: { onClose: () => void }) {
     setTestState({ phase: "idle" });
   }
 
-  /**
-   * Merges the draft into the shared tc-shared-llm-config-v1 config via
-   * ensureProvider/ensurePreset (dedup find-or-create, never overwriting
-   * another app's entries — see llm-config.md's migration rule) instead of
-   * writing tc-note's own local settings, so the wizard's edits show up
-   * identically in Settings — and in every other participating app — afterward.
-   */
+  // Add the onboarding connection without changing legacy shared fields.
   function saveLlmDraft() {
     const baseUrl = llm.baseUrl.trim();
     if (!baseUrl) return;
@@ -102,21 +97,26 @@ export function OnboardingOverlay(props: { onClose: () => void }) {
     const model = llm.model.trim();
 
     const shared = loadLlmConfig() ?? emptyLlmConfig();
-    const providerId = ensureProvider(shared, { label: t("onboarding.llm.providerLabel"), baseUrl, apiKey });
+    const providerId = shared.providers.find(p => p.baseUrl === baseUrl && p.apiKey === apiKey)?.id
+      ?? createProvider(shared, t("onboarding.llm.providerLabel"));
+    patchProvider(shared, providerId, { baseUrl, apiKey });
     if (model) {
-      const presetId = ensurePreset(shared, { label: model, providerId, model });
-      if (!shared.defaultPresetId) shared.defaultPresetId = presetId;
+      patchProvider(shared, providerId, { models: [...new Set([...(shared.providers.find(p => p.id === providerId)?.models ?? []), model])] });
+      if (!shared.defaultModel) shared.defaultModel = { providerId, model };
     }
     saveLlmConfig(shared);
   }
 
   async function handleTest() {
-    if (testState.phase === "busy" || !llm.baseUrl.trim()) return;
+    if (testState.phase === "busy" || !llm.baseUrl.trim() || !llm.model.trim()) return;
     setTestState({ phase: "busy" });
     try {
-      await requestApiChatCompletionStreaming(
-        { baseUrl: llm.baseUrl.trim(), apiKey: llm.apiKey, model: llm.model.trim() || undefined },
-        [{ role: "user", content: t("onboarding.llm.testPrompt") }],
+        const config = emptyLlmConfig();
+        const providerId = createProvider(config, t("onboarding.llm.providerLabel"));
+        patchProvider(config, providerId, { baseUrl: llm.baseUrl.trim(), apiKey: llm.apiKey });
+        await requestTaskChat(
+          config, { ref: { providerId, model: llm.model.trim() }, reasoningEffort: "none" },
+          [{ role: "user", content: t("onboarding.llm.testPrompt") }],
         () => {},
       );
       setTestState({ phase: "ok" });
@@ -198,7 +198,7 @@ export function OnboardingOverlay(props: { onClose: () => void }) {
                 id="ob-llm-model"
                 class="ob-input"
                 type="text"
-                placeholder={t("onboarding.llm.modelPlaceholder")}
+                placeholder={aiSettingsMessages[aiSettingsLocale(language)].modelPlaceholder}
                 value={llm.model}
                 onInput={(e) => updateLlm({ model: inputValue(e) })}
               />
@@ -209,7 +209,7 @@ export function OnboardingOverlay(props: { onClose: () => void }) {
                 class="ob-btn"
                 type="button"
                 onClick={() => void handleTest()}
-                disabled={testState.phase === "busy" || !llm.baseUrl.trim()}
+                disabled={testState.phase === "busy" || !llm.baseUrl.trim() || !llm.model.trim()}
               >
                 {testState.phase === "busy" ? <span class="spinner" /> : <Icon name="link" size={16} />}
                 {testState.phase === "busy" ? t("onboarding.llm.testing") : t("onboarding.llm.test")}

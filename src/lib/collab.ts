@@ -14,22 +14,16 @@ import * as awarenessProtocol from "y-protocols/awareness";
 import * as encoding from "lib0/encoding";
 import * as decoding from "lib0/decoding";
 import {
-  MistNode,
   EVENT_RAW,
   EVENT_PEER_CONNECTED,
   EVENT_PEER_DISCONNECTED,
   DELIVERY_RELIABLE,
 } from "../vendor/mistlib/wrappers/web/index.js";
-import { ensureMistNode, currentNodeId, onRoomEvent, type NodeEventHandler } from "./mistNode";
-import { decode as decodeLlm, encode as encodeLlm, type ProtocolMessage } from "@tik-choco/mistai";
+import { createSharedMistNode, currentNodeId, type NodeEventHandler } from "./mistNode";
+import type { MistNodeLike } from "@tik-choco/mistai";
 
 const MSG_SYNC = 0;
 const MSG_AWARENESS = 1;
-// LLM-network traffic (see llmNet.ts) rides this same room rather than
-// spinning up a second MistNode — the page only allows one (mistNode.ts).
-// Tagged with its own 1-byte prefix alongside MSG_SYNC/MSG_AWARENESS so all
-// three protocols share mistlib's single onEvent/raw-message channel.
-const MSG_LLM = 2;
 
 // Tags updates originating from this session's own Yjs transactions, so the
 // update-broadcast listener can tell them apart from updates applied while
@@ -208,17 +202,6 @@ export interface CollabCallbacks {
   onPeersChange?: (peers: PeerInfo[]) => void;
   /** Fired after any doc mutation (local or remote) so the caller can re-derive its own state. */
   onDocChange?: () => void;
-  // --- LLM network (see llmNet.ts) ---------------------------------------
-  // These ride the same room as sync/awareness. They're usually attached
-  // after construction via setLlmCallbacks() (the LLM orchestration lives in
-  // useLlmNet, separate from whoever creates the session), but they live on
-  // CollabCallbacks so the whole message surface is documented in one place.
-  /** A decoded, validated LLM protocol message arrived from `fromId`. */
-  onLlmMessage?: (fromId: string, msg: ProtocolMessage) => void;
-  /** A peer joined the room — the provider uses this to send provider_hello. */
-  onLlmPeerConnected?: (peerId: string) => void;
-  /** A peer left the room — the consumer uses this to forget a lost provider. */
-  onLlmPeerDisconnected?: (peerId: string) => void;
 }
 
 interface AwarenessState {
@@ -234,24 +217,13 @@ interface AwarenessState {
 // for tests, which simulate multiple independent peers within a single
 // process and so need each simulated peer to have its own fake node.
 export interface MistNodeAccess {
-  ensure(): Promise<InstanceType<typeof MistNode>>;
+  ensure(): Promise<MistNodeLike>;
   currentId(): string;
-  /**
-   * Registers a room-scoped event handler on the shared node instead of
-   * calling node.onEvent() directly (see mistNode.ts — the node exposes only
-   * one event slot, but may belong to several rooms at once, e.g. this
-   * session's room alongside llmNetworkRoom.ts's dedicated AI Network room).
-   * Optional: test doubles give each simulated peer its own node, so
-   * per-room multiplexing on a shared node is a production-only concern —
-   * when omitted, join() falls back to calling node.onEvent() itself.
-   */
-  onRoomEvent?(roomId: string, handler: NodeEventHandler): () => void;
 }
 
 const defaultNodeAccess: MistNodeAccess = {
-  ensure: ensureMistNode,
+  ensure: async () => { const handle = createSharedMistNode(currentNodeId()); await handle.init(); return handle; },
   currentId: currentNodeId,
-  onRoomEvent,
 };
 
 // One CollabSession per open note. Owns the Y.Doc, awareness instance, and
@@ -267,21 +239,14 @@ export class CollabSession {
   readonly blockContents = this.doc.getMap<string>("blockContents");
   readonly meta = this.doc.getMap<string>("meta");
 
-  private node: InstanceType<typeof MistNode> | null = null;
+  private node: MistNodeLike | null = null;
   private nodeId: string | null = null;
   private roomId: string | null = null;
-  // Set when join() registers through nodeAccess.onRoomEvent (the production
-  // path) rather than claiming node.onEvent() directly — called on leave() so
-  // a later join (this session's, or the dedicated LLM room's) never lands on
-  // a stale handler for this room id.
-  private unregisterRoomEvent: (() => void) | null = null;
   private status: CollabStatus = "idle";
   private disposed = false;
   private peerIdByClientId = new Map<number, string>();
   private user: CollabUser;
-  // Not readonly: setLlmCallbacks() merges the LLM-network handlers in after
-  // construction (they're owned by useLlmNet, not whoever built the session).
-  private callbacks: CollabCallbacks;
+  private readonly callbacks: CollabCallbacks;
   private readonly nodeAccess: MistNodeAccess;
 
   constructor(user: CollabUser, callbacks: CollabCallbacks = {}, nodeAccess: MistNodeAccess = defaultNodeAccess) {
@@ -309,36 +274,6 @@ export class CollabSession {
     this.doc.transact(fn, LOCAL_ORIGIN);
   }
 
-  /**
-   * Attaches (or replaces) the LLM-network handlers on this session. Passing
-   * a subset merges over what's there; pass `{}` to detach. Kept separate
-   * from the constructor callbacks because the LLM orchestration binds to
-   * whichever session is currently active, independently of who created it.
-   */
-  setLlmCallbacks(
-    handlers: Pick<CollabCallbacks, "onLlmMessage" | "onLlmPeerConnected" | "onLlmPeerDisconnected">,
-  ): void {
-    this.callbacks = {
-      ...this.callbacks,
-      onLlmMessage: handlers.onLlmMessage,
-      onLlmPeerConnected: handlers.onLlmPeerConnected,
-      onLlmPeerDisconnected: handlers.onLlmPeerDisconnected,
-    };
-  }
-
-  /**
-   * Sends an LLM protocol message over the room, to a single peer (`toId`) or
-   * broadcast (`toId === null`). Framed with the MSG_LLM prefix then the
-   * mistai-encoded JSON bytes nested as a length-delimited array, decoded
-   * symmetrically in handleRawMessage. No-op if the room isn't joined yet.
-   */
-  sendLlm(toId: string | null, msg: ProtocolMessage): void {
-    if (!this.node) return;
-    const encoder = encoding.createEncoder();
-    encoding.writeVarUint(encoder, MSG_LLM);
-    encoding.writeVarUint8Array(encoder, encodeLlm(msg));
-    this.node.sendMessage(toId, encoding.toUint8Array(encoder), DELIVERY_RELIABLE);
-  }
 
   setLocalActiveBlock(index: number | null): void {
     const state = (this.awareness.getLocalState() as AwarenessState | null) ?? {
@@ -461,13 +396,6 @@ export class CollabSession {
     } else if (msgType === MSG_AWARENESS) {
       const update = decoding.readVarUint8Array(decoder);
       awarenessProtocol.applyAwarenessUpdate(this.awareness, update, REMOTE_ORIGIN);
-    } else if (msgType === MSG_LLM) {
-      // Peer-supplied bytes — decodeLlm validates every field and returns
-      // null for anything malformed, so nothing untrusted reaches the
-      // handler (see @tik-choco/mistai's decode()).
-      const bytes = decoding.readVarUint8Array(decoder);
-      const msg = decodeLlm(bytes);
-      if (msg) this.callbacks.onLlmMessage?.(fromId, msg);
     }
   }
 
@@ -514,24 +442,11 @@ export class CollabSession {
           console.debug("[collab] peer connected, sending sync step1 + awareness", { fromId, roomId: this.roomId });
           this.sendSyncStep1(fromId);
           this.sendFullAwareness(fromId);
-          // Let the LLM provider greet the newcomer (provider_hello).
-          this.callbacks.onLlmPeerConnected?.(fromId);
         } else if (eventType === EVENT_PEER_DISCONNECTED) {
           this.handlePeerDisconnected(fromId);
-          // Let the LLM consumer forget a provider that just left.
-          this.callbacks.onLlmPeerDisconnected?.(fromId);
         }
       };
-      // Production nodeAccess registers through mistNode.ts's shared
-      // room-keyed dispatcher (the node may also be serving a dedicated LLM
-      // Network room at the same time — see llmNetworkRoom.ts); test doubles
-      // that don't provide onRoomEvent get the old direct-claim behavior,
-      // which is fine since each simulates its own independent node.
-      if (this.nodeAccess.onRoomEvent) {
-        this.unregisterRoomEvent = this.nodeAccess.onRoomEvent(roomId, handleEvent);
-      } else {
-        node.onEvent(handleEvent);
-      }
+      node.onEvent((type, from, payload) => handleEvent(type, from, payload, roomId));
 
       this.awareness.setLocalState({
         peerId: nodeId,
@@ -540,7 +455,7 @@ export class CollabSession {
         activeBlock: null,
       } satisfies AwarenessState);
 
-      node.joinRoom(roomId);
+      await node.joinRoom(roomId);
       this.setStatus("connected");
       console.debug("[collab] join: connected", { roomId });
     } catch (err) {
@@ -557,8 +472,6 @@ export class CollabSession {
         [this.doc.clientID],
         LOCAL_ORIGIN,
       );
-      this.unregisterRoomEvent?.();
-      this.unregisterRoomEvent = null;
       this.node.leaveRoom();
       this.node = null;
     }
