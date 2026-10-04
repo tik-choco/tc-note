@@ -6,10 +6,10 @@ const SETTINGS_KEY = "tc-note:app-settings";
 
 /** "system" follows the OS's prefers-color-scheme; light/dark are explicit overrides. */
 export type Theme = "light" | "dark" | "system";
-export type Language = "ja" | "en" | "zh" | "es" | "fr" | "de" | "ko" | "pt";
+export type Language = "ja" | "en" | "zh" | "zh-CN" | "zh-TW" | "es" | "fr" | "de" | "ko" | "pt";
 
 /** All UI languages, in the order shown in the language picker. */
-export const LANGUAGES: Language[] = ["ja", "en", "zh", "es", "fr", "de", "ko", "pt"];
+export const LANGUAGES: Language[] = ["ja", "en", "zh", "zh-CN", "zh-TW", "es", "fr", "de", "ko", "pt"];
 
 export interface AppSettings {
   theme: Theme;

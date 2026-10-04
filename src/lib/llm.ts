@@ -1,20 +1,7 @@
-// Direct (transport === "api") chat completion against an OpenAI-compatible
-// endpoint, streaming the assistant reply delta-by-delta. The SSE plumbing
-// lives in @tik-choco/mistai (streamChatCompletion); this module adds the
-// app's empty-response guard on top. The target (baseUrl/apiKey/model/
-// temperature/reasoningEffort) is @tik-choco/mistai's own OpenAIConfig shape
-// — callers pass a resolved shared-config preset (see resolvePreset in
-// ./llmConfig.ts) straight through, so per-preset temperature/reasoningEffort
-// flow to the upstream call without this module needing to know about them.
-//
-// Two callers share this:
-//   - the chat panel, when connection === "api" (call the resolved preset's
-//     endpoint directly);
-//   - the LLM-network *provider*, which forwards a peer's llm_request upstream
-//     with the same streaming shape so deltas can be relayed back over the
-//     collab room chunk-by-chunk (see llmNet.ts / useLlmNet.ts).
-
-import { streamChatCompletion, type ChatMessage, type OpenAIConfig } from "@tik-choco/mistai";
+import { MistaiError, streamChatCompletion, type ChatMessage, type OpenAIConfig } from "@tik-choco/mistai";
+import { resolveModel, roomIdFromBaseUrl, type SharedLlmConfigV1 } from "@tik-choco/mistai/llm-config";
+import type { TaskModelV1 } from "@tik-choco/mistai/preact";
+import { rooms } from "./llmRooms";
 
 /**
  * Streams a chat completion from `target`'s `/chat/completions` endpoint.
@@ -40,7 +27,10 @@ export async function requestApiChatCompletionStreaming(
   const fetchFn: typeof fetch | undefined = signal
     ? (input, init) => fetch(input, { ...init, signal })
     : undefined;
-  const full = await streamChatCompletion(target, messages, onDelta, fetchFn);
+  const full = await streamChatCompletion({
+    baseUrl: target.baseUrl, apiKey: target.apiKey, model: target.model,
+    reasoningEffort: target.reasoningEffort,
+  }, messages, onDelta, fetchFn);
 
   // streamChatCompletion resolves with "" when the stream carried no content;
   // callers here treat that as a failure, so keep the guard app-side.
@@ -49,4 +39,29 @@ export async function requestApiChatCompletionStreaming(
   }
 
   return full;
+}
+
+export async function requestTaskChat(
+  config: SharedLlmConfigV1, task: TaskModelV1 | undefined, messages: ChatMessage[],
+  onDelta?: (delta: string, full: string) => void, signal?: AbortSignal,
+): Promise<string> {
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  const target = resolveModel(config, task?.ref);
+  if (!target) throw new MistaiError("ENDPOINT_NOT_CONFIGURED", "No usable model configured.");
+  const roomId = roomIdFromBaseUrl(target.baseUrl);
+  if (roomId) {
+    const request = rooms.requestRoomChat(roomId, messages, target.model, (delta, full) => {
+      if (!signal?.aborted) onDelta?.(delta, full);
+    });
+    if (!signal) return request;
+    return new Promise((resolve, reject) => {
+      const abort = () => reject(new DOMException("Aborted", "AbortError"));
+      signal.addEventListener("abort", abort, { once: true });
+      request.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+    });
+  }
+  let full = "";
+  return requestApiChatCompletionStreaming({ ...target, reasoningEffort: task?.reasoningEffort ?? "none" }, messages, delta => {
+    full += delta; onDelta?.(delta, full);
+  }, signal);
 }
