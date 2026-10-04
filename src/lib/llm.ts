@@ -50,8 +50,12 @@ export async function requestTaskChat(
   if (!target) throw new MistaiError("ENDPOINT_NOT_CONFIGURED", "No usable model configured.");
   const roomId = roomIdFromBaseUrl(target.baseUrl);
   if (roomId) {
-    const request = rooms.requestRoomChat(roomId, messages, target.model, (delta, full) => {
-      if (!signal?.aborted) onDelta?.(delta, full);
+    const request = rooms.requestRoomChat(roomId, messages, {
+      model: target.model,
+      reasoningEffort: task?.reasoningEffort ?? "none",
+      onDelta: (delta, full) => {
+        if (!signal?.aborted) onDelta?.(delta, full);
+      },
     });
     if (!signal) return request;
     return new Promise((resolve, reject) => {
