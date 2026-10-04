@@ -31,9 +31,24 @@ describe("task routing", () => {
     expect(JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string).model).toBe("default-model");
     expect(task.ref.providerId).toBe("off"); vi.unstubAllGlobals();
   });
-  it("routes a room ref to its exact room and raw model", async () => {
-    await requestTaskChat(config, { ref: { providerId: "room", model: "raw-model" }, reasoningEffort: "high" }, []);
-    expect(requestRoomChat).toHaveBeenCalledWith("second-room", [], "raw-model", expect.any(Function));
+  it("routes a room ref with task effort and forwards streaming deltas", async () => {
+    const onDelta = vi.fn();
+    requestRoomChat.mockImplementationOnce(async (_room, _messages, options) => {
+      options.onDelta("remote ", "remote ");
+      options.onDelta("answer", "remote answer");
+      return "remote answer";
+    });
+    expect(await requestTaskChat(config, { ref: { providerId: "room", model: "raw-model" }, reasoningEffort: "high" }, [], onDelta)).toBe("remote answer");
+    expect(requestRoomChat).toHaveBeenCalledWith("second-room", [], {
+      model: "raw-model", reasoningEffort: "high", onDelta: expect.any(Function),
+    });
+    expect(onDelta.mock.calls).toEqual([["remote ", "remote "], ["answer", "remote answer"]]);
+  });
+  it("sends explicit none when the default room is used without a task", async () => {
+    await requestTaskChat({ ...config, defaultModel: { providerId: "room", model: "raw-model" } }, undefined, []);
+    expect(requestRoomChat).toHaveBeenCalledWith("second-room", [], {
+      model: "raw-model", reasoningEffort: "none", onDelta: expect.any(Function),
+    });
   });
   it("errors without a usable default instead of choosing another provider", async () => {
     await expect(requestTaskChat({ ...config, defaultModel: undefined }, undefined, [])).rejects.toMatchObject({ code: "ENDPOINT_NOT_CONFIGURED" });
