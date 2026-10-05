@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { useAppSettings, useT } from "../hooks/useAppSettings";
 import { Icon } from "./Icon";
 import { formatMistaiError, MESSAGES_EN, MESSAGES_JA, type ChatMessage } from "@tik-choco/mistai";
-import { ConsumerStatusIndicator } from "@tik-choco/mistai/preact";
+import { ConsumerStatusIndicator, Switch } from "@tik-choco/mistai/preact";
+import "@tik-choco/mistai/ui.css";
 import type { UseLlmNetResult } from "../hooks/useLlmNet";
 import { enqueueAiTask, cancelAiTask } from "../lib/aiTaskQueue";
 import { useAiTaskQueue } from "../hooks/useAiTaskQueue";
@@ -192,14 +193,10 @@ export function LlmChatPanel(props: {
       {error && !messages.some((m) => m.error) && <div class="llm-chat-error">{error}</div>}
 
       <div class="llm-chat-composer">
-        <label class="llm-chat-context-toggle">
-          <input
-            type="checkbox"
-            checked={includeContext}
-            onChange={(e) => setIncludeContext((e.target as HTMLInputElement).checked)}
-          />
+        <div class="llm-chat-context-toggle">
+          <Switch checked={includeContext} label={t("llmChat.includeContext")} onChange={setIncludeContext} />
           <span>{t("llmChat.includeContext")}</span>
-        </label>
+        </div>
         <div class="llm-chat-input-row">
           <textarea
             ref={inputRef}
