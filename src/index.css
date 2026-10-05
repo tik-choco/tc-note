@@ -99,6 +99,10 @@
      Values reference the app variables, so the dark overrides below flow
      through without needing their own --mistai-* block. */
   --mistai-border: var(--border);
+  --mistai-border-strong: var(--border-strong);
+  --mistai-primary: var(--accent);
+  --mistai-focus: var(--accent);
+  --mistai-focus-ring: var(--ring);
   --mistai-surface: var(--surface);
   --mistai-text: var(--text);
   --mistai-text-muted: var(--text-placeholder);
