@@ -12,7 +12,7 @@
 // localStorage record and blow the origin's quota (see storage-fix-spec's
 // dual-read/quota rules). The caller (app.tsx's handleShareArticle) already
 // catches and surfaces a "share failed" toast on any thrown error.
-import { storage_add } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_add } from "@tik-choco/mistlib-web";
 import { ensureMistNode } from "./mistNode";
 import { markdownToPlainText } from "./mistlib";
 import { publishShared } from "./sharedBus";

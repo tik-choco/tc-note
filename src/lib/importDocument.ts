@@ -14,7 +14,7 @@
 import { saveNote, setNoteFolder, type NoteMeta } from "./mistlib";
 import { newId } from "./util";
 import { readShared, subscribeShared } from "./sharedBus";
-import { storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_get } from "@tik-choco/mistlib-web";
 import { ensureMistNode } from "./mistNode";
 
 const OCR_INDEX_KEY = "mist_ocr_markdown_index";

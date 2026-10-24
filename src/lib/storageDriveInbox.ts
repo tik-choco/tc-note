@@ -20,7 +20,7 @@
 // Best-effort: guarded on OPFS + Web Crypto availability and a size cap, and
 // every failure is swallowed, so a file drop in tc-note itself never fails
 // because of this side channel.
-import { storage_add } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_add } from "@tik-choco/mistlib-web";
 import { ensureMistNode } from "./mistNode";
 import { publishShared, readShared } from "./sharedBus";
 

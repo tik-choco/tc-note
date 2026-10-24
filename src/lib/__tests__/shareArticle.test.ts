@@ -4,7 +4,7 @@ const { ensureMistNode } = vi.hoisted(() => ({ ensureMistNode: vi.fn() }));
 vi.mock("../mistNode", () => ({ ensureMistNode }));
 
 const { storage_add } = vi.hoisted(() => ({ storage_add: vi.fn() }));
-vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({ storage_add }));
+vi.mock("@tik-choco/mistlib-web", () => ({ storage_add }));
 
 const { publishShared } = vi.hoisted(() => ({ publishShared: vi.fn() }));
 vi.mock("../sharedBus", () => ({ publishShared }));

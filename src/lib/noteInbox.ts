@@ -36,7 +36,7 @@
 import { saveNote, setNoteFolder, listFolders, createFolder, type NoteMeta } from "./mistlib";
 import { newId } from "./util";
 import { ensureMistNode } from "./mistNode";
-import { storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_get } from "@tik-choco/mistlib-web";
 import type { SharedRecord } from "./sharedBus";
 
 export const noteInboxTopic = "note-inbox";

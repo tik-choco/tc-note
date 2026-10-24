@@ -4,7 +4,7 @@ import type { NoteMeta } from "../mistlib";
 // noteInbox.ts only needs mistlib's note/folder-creation surface and
 // mistNode's readiness gate — mock both directly, matching autoImport.test.ts's
 // style of mocking ../mistlib rather than the underlying wasm store. The
-// vendored mistlib wrapper (storage_get) is mocked too since resolveItem is
+// npm @tik-choco/mistlib-web wrapper (storage_get) is mocked too since resolveItem is
 // overridden in these tests and never exercises the real one.
 const { saveNote, setNoteFolder, listFolders, createFolder } = vi.hoisted(() => ({
   saveNote: vi.fn(),
@@ -18,7 +18,7 @@ const { ensureMistNode } = vi.hoisted(() => ({ ensureMistNode: vi.fn() }));
 vi.mock("../mistNode", () => ({ ensureMistNode }));
 
 const { storage_get } = vi.hoisted(() => ({ storage_get: vi.fn() }));
-vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({ storage_get }));
+vi.mock("@tik-choco/mistlib-web", () => ({ storage_get }));
 
 import {
   createNoteInboxActions,

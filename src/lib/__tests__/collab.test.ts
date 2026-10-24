@@ -15,7 +15,7 @@ import {
   type PeerInfo,
 } from "../collab";
 import { reconcileBlockIds } from "../blockDiff";
-import type { MistNode } from "../../vendor/mistlib/wrappers/web/index.js";
+import type { MistNode } from "@tik-choco/mistlib-web";
 
 // Encodes a value the way bincode's `DefaultOptions` (little-endian varints)
 // does, mirroring mistlib-core's overlay/wire.rs — used below to build a
@@ -138,7 +138,7 @@ const {
   return { EVENT_RAW, EVENT_PEER_CONNECTED, EVENT_PEER_DISCONNECTED, DELIVERY_RELIABLE, MockMistNode, rooms };
 });
 
-vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({
+vi.mock("@tik-choco/mistlib-web", () => ({
   MistNode: MockMistNode,
   EVENT_RAW,
   EVENT_PEER_CONNECTED,

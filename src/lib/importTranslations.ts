@@ -12,7 +12,7 @@
 // addressed via mistlib's storage_add. readHistory() resolves both shapes
 // transparently.
 import { createFolder, listFolders, listNotes, saveNote, setNoteFolder } from "./mistlib";
-import { storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_get } from "@tik-choco/mistlib-web";
 import { ensureMistNode } from "./mistNode";
 
 // Exported so autoImport.ts's `storage` event listener can filter to this

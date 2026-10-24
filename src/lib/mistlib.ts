@@ -1,5 +1,4 @@
-// Thin wrapper around the vendored mistlib-wasm build (see
-// scripts/fetch-mistlib.mjs). Provides note persistence backed by
+// Note persistence using @tik-choco/mistlib-web from npm, backed by
 // mistlib's content-addressed P2P storage (storage_add / storage_get).
 //
 // mistlib is content-addressed only — it has no concept of a note "list",
@@ -7,7 +6,7 @@
 // title/cid/updatedAt/folderId) and a folder list in localStorage, and use
 // mistlib purely as the durable byte store.
 
-import { storage_add, storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_add, storage_get } from "@tik-choco/mistlib-web";
 import { ensureMistNode } from "./mistNode";
 import { clearHistory, recordVersion } from "./noteHistory";
 

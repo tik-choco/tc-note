@@ -1,4 +1,4 @@
-import { MistNode } from "../vendor/mistlib/wrappers/web/index.js";
+import { MistNode } from "@tik-choco/mistlib-web";
 import { mistSignalingConfig } from "./mistSignaling";
 import { createSharedNodeScope, type MistNodeLike } from "@tik-choco/mistai";
 

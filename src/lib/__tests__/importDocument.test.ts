@@ -17,7 +17,7 @@ const { ensureMistNode } = vi.hoisted(() => ({ ensureMistNode: vi.fn() }));
 vi.mock("../mistNode", () => ({ ensureMistNode }));
 
 const { storage_get } = vi.hoisted(() => ({ storage_get: vi.fn() }));
-vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({ storage_get }));
+vi.mock("@tik-choco/mistlib-web", () => ({ storage_get }));
 
 import { importDocument, importPdfViewerDocument, listPdfViewerDocuments } from "../importDocument";
 

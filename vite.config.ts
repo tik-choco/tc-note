@@ -82,6 +82,7 @@ export default defineConfig(({ mode }) => {
     }),
   ],
   resolve: { alias },
+  optimizeDeps: { exclude: ['@tik-choco/mistlib', '@tik-choco/mistlib-web'] },
   // The dev server refuses to serve files outside the project root
   // (server.fs.allow) — and the local engine lives outside it. Widen the
   // allow list to exactly the aliased pkg dir (plus the project root) only

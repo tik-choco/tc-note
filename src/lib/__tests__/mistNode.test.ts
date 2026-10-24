@@ -45,7 +45,7 @@ const { MockMistNode, instances } = vi.hoisted(() => {
   return { MockMistNode, instances };
 });
 
-vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({ MistNode: MockMistNode }));
+vi.mock("@tik-choco/mistlib-web", () => ({ MistNode: MockMistNode }));
 
 // mistNode.ts's getPageNodeId() reads/writes localStorage on first use.
 function createMemoryStorage(): Storage {

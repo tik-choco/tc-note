@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // importTranslations.ts only needs mistNode's readiness gate and the
-// vendored mistlib wrapper's storage_get (for the bodyCid dual-read path),
+// npm @tik-choco/mistlib-web wrapper's storage_get (for the bodyCid dual-read path),
 // so mock both directly, matching importDocument.test.ts / noteInbox.test.ts.
 const { ensureMistNode } = vi.hoisted(() => ({ ensureMistNode: vi.fn() }));
 vi.mock("../mistNode", () => ({ ensureMistNode }));
 
 const { storage_get } = vi.hoisted(() => ({ storage_get: vi.fn() }));
-vi.mock("../../vendor/mistlib/wrappers/web/index.js", () => ({ storage_get }));
+vi.mock("@tik-choco/mistlib-web", () => ({ storage_get }));
 
 import { readHistory, HISTORY_KEY } from "../importTranslations";
 

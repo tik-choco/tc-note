@@ -8,7 +8,7 @@
 // note index (`tc-note:index`): the index is read on every render and is the
 // app's single point of failure, so it stays small and its shape unchanged.
 // History is looked at far less often and can afford to carry more data.
-import { storage_get } from "../vendor/mistlib/wrappers/web/index.js";
+import { storage_get } from "@tik-choco/mistlib-web";
 import { ensureMistNode } from "./mistNode";
 
 const HISTORY_KEY = "tc-note:history";
