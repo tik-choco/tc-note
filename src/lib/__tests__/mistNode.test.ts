@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
+import { DELIVERY_RELIABLE, EVENT_RAW } from "@tik-choco/mistai";
 
 type FakeEventHandler = (eventType: number, fromId: string, payload: unknown, roomId: string) => void;
 
@@ -86,12 +87,12 @@ describe("mistai node bridge", () => {
     await Promise.all([collab.joinRoom("shared-room"), consumer.joinRoom("shared-room"), provider.joinRoom("second-room")]);
     const events: string[] = [];
     consumer.onEvent((_type, from) => events.push(from));
-    node.fire(0, "second-peer", new Uint8Array(), "second-room");
-    node.fire(0, "shared-peer", new Uint8Array(), "shared-room");
+    node.fire(EVENT_RAW, "second-peer", new Uint8Array(), "second-room");
+    node.fire(EVENT_RAW, "shared-peer", new Uint8Array(), "shared-room");
     expect(events).toEqual(["shared-peer"]);
     collab.leaveRoom(); expect(leave).not.toHaveBeenCalled();
-    const bytes = new Uint8Array([1]); provider.sendMessage(null, bytes, 0);
-    expect(send).toHaveBeenLastCalledWith(null, bytes, 0, "second-room");
+    const bytes = new Uint8Array([1]); provider.sendMessage(null, bytes, DELIVERY_RELIABLE);
+    expect(send).toHaveBeenLastCalledWith(null, bytes, DELIVERY_RELIABLE, "second-room");
     consumer.leaveRoom(); expect(leave).toHaveBeenCalledWith("shared-room");
     provider.leaveRoom(); expect(leave).toHaveBeenCalledWith("second-room");
     expect(node.initialized).toBe(true); expect(instances).toHaveLength(1);

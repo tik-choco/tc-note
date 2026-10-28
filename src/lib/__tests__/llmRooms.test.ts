@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { decode, encode, type MistNodeLike, type ProtocolMessage } from "@tik-choco/mistai";
+import { decode, encode, EVENT_RAW, type MistNodeLike, type ProtocolMessage } from "@tik-choco/mistai";
 import { emptyLlmConfig } from "@tik-choco/mistai/llm-config";
 
 const createSharedMistNode = vi.hoisted(() => vi.fn());
@@ -21,7 +21,7 @@ class PeerNode implements MistNodeLike {
     const message = decode(payload);
     if (message) this.sent.push(message);
   }
-  receive(message: ProtocolMessage) { this.handler?.(0, "provider", encode(message)); }
+  receive(message: ProtocolMessage) { this.handler?.(EVENT_RAW, "provider", encode(message)); }
 }
 
 let node: PeerNode;

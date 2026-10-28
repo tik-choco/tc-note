@@ -15,7 +15,8 @@ import {
   type PeerInfo,
 } from "../collab";
 import { reconcileBlockIds } from "../blockDiff";
-import type { MistNode } from "@tik-choco/mistlib-web";
+import { EVENT_PEER_CONNECTED, EVENT_PEER_DISCONNECTED, type MistNode } from "@tik-choco/mistlib-web";
+import type { MistDelivery } from "@tik-choco/mistai";
 
 // Encodes a value the way bincode's `DefaultOptions` (little-endian varints)
 // does, mirroring mistlib-core's overlay/wire.rs — used below to build a
@@ -57,19 +58,16 @@ function doubleWrap(from: string, to: string, payload: Uint8Array): Uint8Array {
 // registry) has to live inside vi.hoisted rather than as ordinary module
 // scope declarations.
 const {
-  EVENT_RAW,
-  EVENT_PEER_CONNECTED,
-  EVENT_PEER_DISCONNECTED,
-  DELIVERY_RELIABLE,
   MockMistNode,
   rooms,
+  setEventCodes,
 } = vi.hoisted(() => {
-  const EVENT_RAW = 0;
-  const EVENT_PEER_CONNECTED = 5;
-  const EVENT_PEER_DISCONNECTED = 6;
-  const DELIVERY_RELIABLE = 0;
+  let eventCodes: typeof import("@tik-choco/mistlib-web");
+  function setEventCodes(codes: typeof import("@tik-choco/mistlib-web")): void {
+    eventCodes = codes;
+  }
 
-  type EventHandler = (eventType: number, fromId: string, payload: Uint8Array) => void;
+  type EventHandler = (eventType: number, fromId: string, payload: unknown) => void;
 
   const rooms = new Map<string, Set<MockMistNodeType>>();
   function getRoom(roomId: string): Set<MockMistNodeType> {
@@ -108,18 +106,18 @@ const {
       const others = Array.from(room);
       room.add(this);
       for (const peer of others) {
-        peer._onEvent?.(EVENT_PEER_CONNECTED, this.nodeId, new Uint8Array());
-        this._onEvent?.(EVENT_PEER_CONNECTED, peer.nodeId, new Uint8Array());
+        peer._onEvent?.(eventCodes.EVENT_PEER_CONNECTED, this.nodeId, new TextEncoder().encode("joined"));
+        this._onEvent?.(eventCodes.EVENT_PEER_CONNECTED, peer.nodeId, new TextEncoder().encode("joined"));
       }
     }
 
-    sendMessage(toId: string | null, payload: Uint8Array, _delivery = DELIVERY_RELIABLE): void {
+    sendMessage(toId: string | null, payload: Uint8Array, _delivery = eventCodes.DELIVERY_RELIABLE): void {
       if (!this.roomId) return;
       const room = getRoom(this.roomId);
       for (const peer of room) {
         if (peer === this) continue;
         if (toId !== null && peer.nodeId !== toId) continue;
-        peer._onEvent?.(EVENT_RAW, this.nodeId, payload);
+        peer._onEvent?.(eventCodes.EVENT_RAW, this.nodeId, payload);
       }
     }
 
@@ -128,23 +126,21 @@ const {
       const room = getRoom(this.roomId);
       room.delete(this);
       for (const peer of room) {
-        peer._onEvent?.(EVENT_PEER_DISCONNECTED, this.nodeId, new Uint8Array());
+        peer._onEvent?.(eventCodes.EVENT_PEER_DISCONNECTED, this.nodeId, new TextEncoder().encode("left"));
       }
       this.roomId = null;
     }
   }
   type MockMistNodeType = InstanceType<typeof MockMistNode>;
 
-  return { EVENT_RAW, EVENT_PEER_CONNECTED, EVENT_PEER_DISCONNECTED, DELIVERY_RELIABLE, MockMistNode, rooms };
+  return { MockMistNode, rooms, setEventCodes };
 });
 
-vi.mock("@tik-choco/mistlib-web", () => ({
-  MistNode: MockMistNode,
-  EVENT_RAW,
-  EVENT_PEER_CONNECTED,
-  EVENT_PEER_DISCONNECTED,
-  DELIVERY_RELIABLE,
-}));
+vi.mock("@tik-choco/mistlib-web", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tik-choco/mistlib-web")>();
+  setEventCodes(actual);
+  return { ...actual, MistNode: MockMistNode };
+});
 
 function makeId(): () => string {
   let n = 0;
@@ -185,6 +181,11 @@ beforeEach(() => {
 });
 
 describe("CollabSession real-time sync", () => {
+  it("uses the current peer event codes", () => {
+    expect(EVENT_PEER_CONNECTED).toBe(2);
+    expect(EVENT_PEER_DISCONNECTED).toBe(3);
+  });
+
   it("syncs existing content to a peer that joins later", async () => {
     const a = new CollabSession(ALICE, {}, makeNodeAccess("a"));
     await a.join("room1");
@@ -321,6 +322,23 @@ describe("CollabSession real-time sync", () => {
     a.destroy();
     b.destroy();
   });
+
+  it("removes a disconnected peer's awareness when the transport drops", async () => {
+    let aPeers: PeerInfo[] = [];
+    const bAccess = makeNodeAccess("b");
+    const a = new CollabSession(ALICE, { onPeersChange: (peers) => (aPeers = peers) }, makeNodeAccess("a"));
+    const b = new CollabSession(BOB, {}, bAccess);
+
+    await a.join("room1");
+    await b.join("room1");
+    expect(aPeers.some((peer) => peer.clientId === b.localClientId)).toBe(true);
+
+    (await bAccess.ensure()).leaveRoom();
+    expect(aPeers.some((peer) => peer.clientId === b.localClientId)).toBe(false);
+
+    a.destroy();
+    b.destroy();
+  });
 });
 
 describe("peelLegacyEnvelope (mistlib-dev#16 double-wrap compat)", () => {
@@ -358,7 +376,7 @@ describe("peelLegacyEnvelope (mistlib-dev#16 double-wrap compat)", () => {
     // stuck on the old build while a already upgraded.
     const bNode = await bAccess.ensure();
     const originalSend = bNode.sendMessage.bind(bNode);
-    bNode.sendMessage = ((toId: string | null, payload: Uint8Array, delivery?: number) => {
+    bNode.sendMessage = ((toId: string | null, payload: Uint8Array, delivery?: MistDelivery) => {
       originalSend(toId, doubleWrap("b", toId ?? "*", payload), delivery);
     }) as typeof bNode.sendMessage;
 
